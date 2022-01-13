@@ -1,6 +1,6 @@
 # cadCAD Reference Implementation - WiP
 
-cadCAD is a Python library for designing, testing and validating complex systems through simulation. This repository contains the reference implementation of the software, based on the formal specification.
+Complex Adaptive Dynamics Computer Aided Design (cadCAD) is a language for encoding Generalized Dynamical Systems (GDS) as computer programs. This repository contains the reference implementation of the software, based on the formal specification. Python was chosen for the reference implementation for clarity and ease of use.
 
 ## Installation
 
@@ -20,12 +20,10 @@ import cadcad
 foo
 ```
 
+## Python Version
+
+We are assuming the minimal Python version to be 3.9, but if you tested on a lower version and cadCAD worked, let us know!
+
 ## Contributing
 
-Pull requests are welcome. For major changes, please open an issue first to discuss what you would like to change.
-
-Please make sure to update tests as appropriate.
-
-## License
-
-[MIT](LICENSE)
+To know how you can contribute to this package, see the [CONTRIBUTING](CONTRIBUTING.md) file.
