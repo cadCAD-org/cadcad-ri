@@ -22,7 +22,7 @@ foo
 
 ## Python Version
 
-We are assuming the minimal Python version to be 3.9, but if you tested on a lower version and cadCAD worked, let us know!
+We are assuming the minimal Python version to be 3.8, but if you tested on a lower version and cadCAD worked, let us know!
 
 ## Contributing
 
