@@ -27,7 +27,11 @@ s2 = Space(s2dimensions)
 # Our third space (s3) which will serve as the codomain of our block.
 s3 = s1 * s2
 
-# Our block logic which gets applied to a point.
+# Our block logic which gets applied to a point. At the moment, the
+# "logic" is simply to append a new dimension (length) which should
+# satisfy the schema requirements of s3 (our codomain). No check
+# happens to ensure the generated point doesn't violate the schema
+# requirements but it could be added pretty easily.
 def calculate_length(point):
   return {"name": point["name"], "length": len(point["name"]), "data": point["data"]}
 
