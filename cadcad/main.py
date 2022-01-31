@@ -33,6 +33,17 @@ def calculate_length(point):
 
 # A sample point (p1). It MUST adhere to the dimensions specified in s1
 # as that statespace serves as our blocks domain.
+#
+# Notes: If you do not include all keys that were defined in s1, this
+# point is seen as invalid. If you include extra keys in your point,
+# that too is seen as invalid. Lastly, if you do not use the correct
+# datatype as defined in s1, this point is seen as invalid.
+#
+# Examples (using state schema: {"name": str, "data": numpy.ndarray}):
+# {"name": "Tyler"} -- Invalid point (missing key: data)
+# {"name": "Tyler", "data": 12} -- Invalid point (type mismatch: data)
+# {"name": "Tyler", "data": numpy.ndarray((1, 1))} -- Valid point
+# {"name": "Tyler", "data": numpy.ndarray((1, 1)), "a": 1} -- Invalid point (extra key: a)
 p1 = {"name": "Tyler", "data": np.ndarray((1, 1))}
 
 # Our block (b1) which specifies s1 as our domain, s3 as our codomain,
