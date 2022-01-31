@@ -1,20 +1,22 @@
 from dimension import Dimension
 
 class Space:
-  def __init__(self, name):
-    self.name = name
-    self.dimensions = {}
+  def __init__(self, dimensions={}):
+    self.dimensions = dimensions
+
+    for key in dimensions:
+      if isinstance(dimensions[key], Dimension):
+        self.dimensions[key] = dimensions[key]
 
   def __repr__(self):
-    return "Space(name=%s, dimensions=%s" % (self.name, self.dimensions)
+    return "Space(dimensions=%s)" % (self.dimensions)
 
-  def add_dimension(self, key, type, constructor):
-    self.dimensions[key] = Dimension(type, constructor)
-    return self.dimensions[key]
+  def __mul__(self, space):
+    return Space({**self.dimensions, **space.dimensions})
 
-  def get_dimensions(self):
-    return self.dimensions
+  def __imul__(self, space):
+    return Space({**self.dimensions, **space.dimensions})
 
-  def remove_dimension(self, key):
-    self.dimensions.pop(key)
-    return self.dimensions
+  def add_dimension(self, key, value):
+    if isinstance(value, Dimension):
+      self.dimensions[key] = value
