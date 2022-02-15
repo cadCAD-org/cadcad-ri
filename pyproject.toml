@@ -10,7 +10,6 @@ authors = [
 
 [tool.poetry.dependencies]
 python = ">= 3.9, < 4.0"
-numpy = "^1.22.0"
 tqdm = "^4.62.3"
 
 [tool.poetry.dev-dependencies]
@@ -24,6 +23,7 @@ isort = "*"
 mypy = "*"
 pep8-naming = "*"
 pydocstyle = "*"
+pylint = "*"
 
 [tool.yapf]
 based_on_style = "pep8"

@@ -13,6 +13,24 @@ To set up a development environment:
 
 After making your changes and writting the corresponding tests, run the following from the root of the repository:
 
+- `poetry run make test`
+
+If no errors were thrown, you are good to make a PR. Before doing so, run the more complete suite of checks:
+
 - `poetry run make`
 
-If no errors were thrown, you are good to go.
+Fix the errors, if any, and then open the PR.
+
+## Writing tests
+
+Writing tests is simple.
+
+- Create a file called `test_something.py` in the `tests`folder
+- Inside the file, import `cadcad` and declare a `State` class as appropriate
+- Write your tests as a series of functions with prototype:
+
+  ```python
+  def test_this_and_that() -> None
+  ```
+
+- Then run `poetry run make test`
