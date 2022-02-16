@@ -1,5 +1,7 @@
 """Dimensions definition."""
 
+from __future__ import annotations
+
 from dataclasses import dataclass
 from cadcad.utils import FreezingError
 
@@ -80,13 +82,15 @@ class Dimension():
 
         A dimension is equal to another if their dtype and name are equal.
         Even if the objects are equal, they may ocuppy different positions in memory.
+
         Args:
             other (Dimension): another dimension to compare
         Returns:
             bool: whether the dimension are equal or not
         """
         if isinstance(other, Dimension):
-            return self.dtype == other.dtype and self.name == other.name
+            return self.dtype == other.dtype and self.name == other.name \
+                and self.description == other.description
 
         raise NotImplementedError
 
@@ -108,3 +112,17 @@ class Dimension():
                 f'Frozen dimension {self.name} has data type {self.dtype} '
                 f'and the following description: {newline}{self.description}{newline}'
             )
+
+    def is_equivalent(self, other: Dimension) -> bool:
+        """Check if a dimension is equivalent to another.
+
+        Args:
+            other (Dimension): another dimension to compare
+
+        Returns:
+            bool: whether the dimension are equivalent or not
+        """
+        if isinstance(other, Dimension):
+            return self.dtype == other.dtype
+
+        raise NotImplementedError

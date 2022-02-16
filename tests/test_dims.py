@@ -84,13 +84,15 @@ def test_dim_freezing() -> None:
 def test_dim_equality() -> None:
     """Test the equality of dimensions."""
     dim_a = Dimension(int, "a")
-    dim_b = Dimension(int, "a", "Description of B")
-    dim_c = Dimension(float, "d", "Description of C", True)
-    dim_d = Dimension(int, "d", _frozen=True)
+    dim_b = Dimension(int, "a", "Description")
+    dim_c = Dimension(float, "d", "Description", True)
+    dim_d = Dimension(float, "d", "Description")
+    dim_e = Dimension(int, "e", _frozen=True)
     not_dim = (int, "a")
 
-    assert dim_a == dim_b
-    assert dim_c != dim_d
+    assert dim_a != dim_b
+    assert dim_c == dim_d
+    assert dim_c != dim_e
 
     with pytest.raises(NotImplementedError):
         assert dim_a == not_dim
@@ -122,3 +124,17 @@ def test_dim_creation_exotic() -> None:
     # but this fails on mypy.
     # If you want to appease the gods of static analysis, you can subclass np.ndarray or
     # create a new class by composition.
+
+
+def test_dim_equivalence() -> None:
+    """Test the equivalence of dimensions."""
+    dim_a = Dimension(int, "a")
+    dim_b = Dimension(int, "b", "Description of B")
+    dim_c = Dimension(float, "a")
+    not_dim = (int, "a")
+
+    assert dim_a.is_equivalent(dim_b)
+    assert not dim_a.is_equivalent(dim_c)
+
+    with pytest.raises(NotImplementedError):
+        assert dim_a.is_equivalent(not_dim)
