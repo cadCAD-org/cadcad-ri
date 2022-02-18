@@ -19,7 +19,7 @@ class Dimension():
     description : str
         optional description of the dimension
     frozen : bool
-        wether the dimension is immutable or not
+        whether the dimension is immutable or not
     """
 
     __dtype: type
@@ -80,7 +80,7 @@ class Dimension():
     def __eq__(self, other: object) -> bool:
         """Check if a dimension is equal to another.
 
-        A dimension is equal to another if their dtype and name are equal.
+        A dimension is equal to another if their dtype, name and description are equal.
         Even if the objects are equal, they may ocuppy different positions in memory.
 
         Args:
