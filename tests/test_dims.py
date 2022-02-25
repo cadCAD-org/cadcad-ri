@@ -7,7 +7,7 @@ import pytest
 import numpy as np
 
 from cadcad.spaces import Dimension
-from cadcad.utils import FreezingError
+from cadcad.errors import FreezingError
 
 
 def test_dim_creation() -> None:
