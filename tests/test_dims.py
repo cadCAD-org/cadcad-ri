@@ -6,7 +6,7 @@ This should run as part of the CI/CD pipeline.
 import pytest
 import numpy as np
 
-from cadcad.spaces import Dimension
+from cadcad.spaces import Dimension, Space
 from cadcad.errors import FreezingError
 
 
@@ -19,8 +19,6 @@ def test_dim_creation() -> None:
 
 def test_dim_print() -> None:
     """Test printing of dimensions."""
-    print()
-
     dim_a = Dimension(str, "a")
     dim_b = Dimension(int, "b", "Desc B")
     dim_c = Dimension(float, "c", "Desc C", True)
@@ -144,3 +142,24 @@ def test_dim_equivalence() -> None:
 
     with pytest.raises(NotImplementedError):
         assert dim_a.is_equivalent(not_dim)
+
+
+def test_dim_copy() -> None:
+    """Test the copy of dimensions."""
+    dim_a = Dimension(int, "a")
+    copy1 = dim_a.copy()
+    copy2 = dim_a.copy(name="new_name_for_copy")
+    copy3 = dim_a.copy(description="new description for the copy")
+    copy4 = dim_a.__copy__()
+
+    assert isinstance(copy1, Dimension)
+    assert isinstance(copy2, Dimension)
+    assert isinstance(copy3, Dimension)
+    assert isinstance(copy4, Dimension)
+
+    assert dim_a == copy1
+    assert dim_a == copy4
+    assert copy2.name == "new_name_for_copy"
+    assert copy3.description == "new description for the copy"
+    assert dim_a.is_equivalent(copy2)
+    assert dim_a.is_equivalent(copy3)

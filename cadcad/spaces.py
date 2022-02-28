@@ -17,6 +17,10 @@ class Space():
     ----------
     dimensions: Dict[str, Dimension]
         dictionary of dimension names to dimensions that make up the set of dimensions of the space
+    name: str
+        name of the space
+    description: str (optional)
+        description of the space
     frozen : bool
         whether the dimension is immutable or not
     """
@@ -25,7 +29,8 @@ class Space():
                  dim_tuple: Tuple[Dimension, ...],
                  name: str,
                  description: str = "",
-                 dim_names: Optional[Tuple[str, ...]] = None):
+                 dim_names: Optional[Tuple[str, ...]] = None,
+                 frozen: bool = False):
         """Build a space based on a tuple of dimensions.
 
         Args:
@@ -35,7 +40,7 @@ class Space():
             ValueError: if there is a collision of dimension names
             ValueError: if there is a length mismatch between dim_tuple and dim_names
         """
-        self.__frozen: bool = False
+        self.__frozen: bool = frozen
         self.__name = name
         self.__description = description
 
@@ -46,13 +51,13 @@ class Space():
         self.__dimensions: Dict[str, Dimension] = {}
 
         if dim_names:
-            for (name, dim) in zip(dim_names, dim_tuple):
-                self.__dimensions[name] = dim
+            for (internal_name, dim) in zip(dim_names, dim_tuple):
+                self.__dimensions[internal_name] = dim
         else:
             for dim in dim_tuple:
                 if dim.name in self.__dimensions:
-                    raise ValueError("Collision of dimension names. \
-                            Use dim_names to rename your dimensions inside the space."
+                    raise ValueError("""Collision of dimension names. \
+                            Use dim_names to rename your dimensions inside the space."""
                                      )
 
                 self.__dimensions[dim.name] = dim
@@ -123,7 +128,17 @@ class Space():
         else:
             self.dimensions[dim.name] = dim
 
-    def derive(self, dims: Tuple[Dimension, ...]) -> Space:
+    def drop_dimension(self, dim_name: str) -> None:
+        """Remove a dimension from a space by it's name.
+
+        Args:
+            dim_name (str): name of dimension to be removed
+        """
+        del self.dimensions[dim_name]
+
+    def augment(self,
+                dims: Tuple[Dimension, ...],
+                auto_naming: bool = False) -> Space:
         """Derive a new mutable space from self by adding more dimensions.
 
         Args:
@@ -134,7 +149,10 @@ class Space():
         new_space = self.copy()
 
         for dim in dims:
-            new_space.add_dimension(dim)
+            if dim in new_space.dimensions.values() and auto_naming:
+                new_space.add_dimension(dim, f"new_{dim.name}")
+            else:
+                new_space.add_dimension(dim)
 
         return new_space
 
@@ -245,7 +263,7 @@ class Space():
         if not self.__frozen and self.description:
             return (
                 f'Mutable space {self.name} has dimensions {dims} '
-                f'and the following description: {newline}{self.description}{newline}'
+                f'and the following description:{newline}{self.description}{newline}'
             )
         if not self.__frozen and not self.description:
             return f'Mutable space {self.name} has dimensions {dims} and no description'
@@ -253,7 +271,7 @@ class Space():
             return f'Frozen space {self.name} has dimensions {dims} and no description'
         return (
             f'Frozen space {self.name} has dimensions {dims} '
-            f'and the following description: {newline}{self.description}{newline}'
+            f'and the following description:{newline}{self.description}{newline}'
         )
 
     def __mul__(self: Space, other: Space) -> Space:
@@ -263,17 +281,10 @@ class Space():
 
             dim_tuple = tuple(other.dimensions.values())
 
-            new_space = self.derive(dim_tuple)
+            new_space = self.augment(dim_tuple, True)
             new_space.name = new_name
 
             return new_space
-
-        raise NotImplementedError
-
-    def __rmul__(self: Space, other: Space) -> Space:
-        """Do a cartesian product of self and other in reverse order."""
-        if isinstance(other, Space):
-            return self.__mul__(other)
 
         raise NotImplementedError
 
@@ -376,13 +387,13 @@ class Dimension():
             result.description = description
         return result
 
-    def __copy__(self) -> None:
-        """Forbidden copy method."""
-        raise CopyError(Dimension)
+    def __copy__(self) -> Dimension:
+        """Overriden copy method to custom copy."""
+        return self.copy()
 
-    def __deepcopy__(self, memo: dict) -> None:
-        """Forbidden copy method."""
-        raise CopyError(Dimension)
+    def __deepcopy__(self, memo: dict) -> Dimension:
+        """Overriden copy method to custom copy."""
+        return self.copy()
 
     def __eq__(self, other: object) -> bool:
         """Check if a dimension is equal to another.

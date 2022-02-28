@@ -1,5 +1,5 @@
 test:
-	pytest -s --cov-report term-missing --cov-report html --cov-branch --cov cadcad/
+	pytest -s -vv --cov-report term-missing --cov-report html --cov-branch --cov cadcad/
 
 lint:
 	@echo
