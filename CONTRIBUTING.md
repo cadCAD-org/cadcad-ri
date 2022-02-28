@@ -26,7 +26,6 @@ Fix the errors, if any, and then open the PR.
 Writing tests is simple.
 
 - Create a file called `test_something.py` in the `tests`folder
-- Inside the file, import `cadcad` and declare a `State` class as appropriate
 - Write your tests as a series of functions with prototype:
 
   ```python
