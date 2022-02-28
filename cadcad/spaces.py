@@ -408,7 +408,7 @@ class Dimension():
         if not self._frozen and self.__description:
             return (
                 f'Mutable dimension {self.name} has data type {self.dtype} '
-                f'and the following description: {newline}{self.description}{newline}'
+                f'and the following description:{newline}{self.description}{newline}'
             )
         if not self._frozen and not self.__description:
             return f'Mutable dimension {self.name} has data type {self.dtype} and no description'
@@ -416,7 +416,7 @@ class Dimension():
             return f'Frozen dimension {self.name} has data type {self.dtype} and no description'
         return (
             f'Frozen dimension {self.name} has data type {self.dtype} '
-            f'and the following description: {newline}{self.description}{newline}'
+            f'and the following description:{newline}{self.description}{newline}'
         )
 
     def is_equivalent(self, other: Dimension) -> bool:

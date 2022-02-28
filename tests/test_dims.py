@@ -18,23 +18,29 @@ def test_dim_creation() -> None:
 
 
 def test_dim_print() -> None:
-    """Test printing of dimensions.
-
-    For human manual checking
-    """
+    """Test printing of dimensions."""
     print()
 
     dim_a = Dimension(str, "a")
-    dim_b = Dimension(int, "b", "Description of B")
-    dim_c = Dimension(float, "c", "Description of C", True)
+    dim_b = Dimension(int, "b", "Desc B")
+    dim_c = Dimension(float, "c", "Desc C", True)
     dim_d = Dimension(int, "d", _frozen=True)
 
-    print(dim_a)
-    print(dim_b)
-    print(dim_c)
-    print(dim_d)
+    assert str(
+        dim_a
+    ) == "Mutable dimension a has data type <class 'str'> and no description"
 
-    assert isinstance(dim_b, Dimension)
+    assert str(
+        dim_b
+    ) == "Mutable dimension b has data type <class 'int'> and the following description:\nDesc B\n"
+
+    assert str(
+        dim_c
+    ) == "Frozen dimension c has data type <class 'float'> and the following description:\nDesc C\n"
+
+    assert str(
+        dim_d
+    ) == "Frozen dimension d has data type <class 'int'> and no description"
 
 
 def test_dim_get_set() -> None:
