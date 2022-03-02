@@ -365,7 +365,7 @@ class Dimension():
         self._frozen = True
 
     def copy(self, name: str = "", description: str = "") -> Dimension:
-        """Make a shallow copy of a dimension object.
+        """Make a deep copy of a dimension object.
 
         The resulting object will be mutable. Inherits all other atributes from the parent object.
 
