@@ -126,7 +126,7 @@ def test_add_dims() -> None:
     assert my_space.dimensions["new_name_d"] == dim_d
 
 
-def test_derive_spaces() -> None:
+def test_augment_spaces() -> None:
     """Test deriving spaces from other spaces."""
     dim_a = Dimension(np.double, "a")
     dim_b = Dimension(np.double, "b")

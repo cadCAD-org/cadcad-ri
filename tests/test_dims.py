@@ -6,7 +6,7 @@ This should run as part of the CI/CD pipeline.
 import pytest
 import numpy as np
 
-from cadcad.spaces import Dimension, Space
+from cadcad.spaces import Dimension
 from cadcad.errors import FreezingError
 
 
