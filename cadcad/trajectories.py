@@ -1,6 +1,6 @@
 """Points and Trajectories definitions."""
 
-from typing import Any, Dict
+from typing import Any, Dict, Tuple, Union
 
 from cadcad.spaces import Space
 from cadcad.errors import SchemaError, FreezingError
@@ -68,3 +68,48 @@ class Point():
         """Return a string representation of a point."""
         newline = '\n'
         return f"Frozen point in space {self.space.name} has data{newline}{self.__data}{newline}"
+
+
+class Trajectory():
+    """
+    Trajectories in cadCAD.
+
+    Attributes
+    ----------
+    space: Space
+    points: Tuple[Point, ...]
+        An ordered collection of Points that satisfy the trajectory space
+    """
+
+    def __init__(self, points: Union(Point, Tuple[Point, ...])):
+        if type(points).__name__ == 'tuple':
+            self.__space = points[0].space
+            point_list = []
+
+            for p in points:
+                if p.space == self.space:
+                    point_list.append(p)
+
+            self.__points = tuple(point_list)
+        else:
+            self.__space = points.space
+            self.__points = (points)
+    
+    @property
+    def space(self) -> Space:
+        """Get Space."""
+        return self.__space
+
+    @property
+    def points(self) -> Tuple(Point, ...):
+        """Get Points."""
+        return self.__points
+
+    def add_point(self, point: Point):
+        """Add a point to the trajectory."""
+        self.points.append(point)
+
+    def __str__(self) -> str:
+        """Return a string representation of a trajectory."""
+        newline = '\n'
+        return f"Trajectory has data{newline}{self.__data}{newline}"
