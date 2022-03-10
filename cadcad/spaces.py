@@ -98,7 +98,7 @@ class Space():
         return self.__frozen
 
     def freeze(self) -> None:
-        """Freeze the dimension to deny further changes to it.
+        """Freeze the space to deny further changes to it.
 
         NOTE: This action is irreversible.
         """
