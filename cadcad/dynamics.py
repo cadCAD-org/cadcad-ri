@@ -164,30 +164,35 @@ class Block():
         Returns:
             Union[Point, Collection[Point]]: output points
         """
-        try:
+        if isinstance(points, Point):
+            if not points.space.is_equivalent(self.domains):
+                raise ValueError(
+                    "The point provided does not match the schema of the domain"
+                )
+        elif isinstance(points, Collection):
             for point, space in zip(points, self.domains):
                 if not point.space.is_equivalent(space):
                     raise ValueError(
                         "The point provided does not match the schema of the domain"
                     )
-        except TypeError:
-            if not points.space.is_equivalent(self.domains):
-                raise ValueError(
-                    "The point provided does not match the schema of the domain"
-                ) from None
+        else:
+            raise TypeError(
+                "Inapropriate argument for points on the map method")
 
         result = self.function(points, self.param_space)
 
-        try:
+        if isinstance(result, Point):
+            if not result.space.is_equivalent(self.codomains):
+                raise ValueError(
+                    "The point generated does not match the schema of the codomain"
+                )
+        elif isinstance(result, Collection):
             for res, space in zip(result, self.codomains):
                 if not res.space.is_equivalent(space):
                     raise ValueError(
                         "The point generated does not match the schema of the codomain"
                     )
-        except TypeError:
-            if not result.space.is_equivalent(self.codomains):
-                raise ValueError(
-                    "The point generated does not match the schema of the codomain"
-                ) from None
+        else:
+            raise TypeError("The object generated is not a Point")
 
         return result
