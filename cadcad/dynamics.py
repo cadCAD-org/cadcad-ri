@@ -153,6 +153,31 @@ class Block():
         """Forbidden copy method."""
         raise CopyError(Space)
 
+    def __str__(self) -> str:
+        """Return a string representation of a space."""
+        newline = "\n"
+        str_result = ""
+
+        if self.is_frozen():
+            str_result += "Frozen block "
+        else:
+            str_result += "Unfrozen block "
+
+        if self.name:
+            str_result += f"{self.name} "
+
+        str_result += f"with function {self.function.__name__} "
+        str_result += f"has domains: {newline}-> {self.domains},{newline}"
+        str_result += f"has codomains: {newline}-> {self.codomains},{newline}"
+
+        if self.param_space:
+            str_result += f"has parameter space {self.param_space} "
+
+        if self.description:
+            str_result += f"and description {self.description}"
+
+        return str_result
+
     def map(
         self, points: Union[Point, Collection[Point]]
     ) -> Union[Point, Collection[Point]]:
@@ -164,12 +189,13 @@ class Block():
         Returns:
             Union[Point, Collection[Point]]: output points
         """
-        if isinstance(points, Point):
+        if isinstance(points, Point) and isinstance(self.domains, Space):
             if not points.space.is_equivalent(self.domains):
                 raise ValueError(
                     "The point provided does not match the schema of the domain"
                 )
-        elif isinstance(points, Collection):
+        elif isinstance(points, Collection) and isinstance(
+                self.domains, Collection):
             for point, space in zip(points, self.domains):
                 if not point.space.is_equivalent(space):
                     raise ValueError(
@@ -181,12 +207,13 @@ class Block():
 
         result = self.function(points, self.param_space)
 
-        if isinstance(result, Point):
+        if isinstance(result, Point) and isinstance(self.codomains, Space):
             if not result.space.is_equivalent(self.codomains):
                 raise ValueError(
                     "The point generated does not match the schema of the codomain"
                 )
-        elif isinstance(result, Collection):
+        elif isinstance(result, Collection) and isinstance(
+                self.codomains, Collection):
             for res, space in zip(result, self.codomains):
                 if not res.space.is_equivalent(space):
                     raise ValueError(
