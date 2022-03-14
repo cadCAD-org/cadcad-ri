@@ -17,12 +17,20 @@ class Block():
 
     Attributes
     ----------
-    function: type
-        type of the dimension
+    function: Callable
+        function to be executed by the block
+    domains: Space | Collection[Space]
+        space(s) that incoming point(s) must adhere to
+    codomains: Space | Collection[Space]
+        space(s) that outgoing point(s) must adhere to
+    param_space: Space
+        parameter space of the block (optional)
     name : str
         name of the dimension (optional)
     description : str
         optional description of the dimension (optional)
+    frozen: bool
+        whether the dimension is immutable or not. Defaults to False
     """
 
     __function: Union[
