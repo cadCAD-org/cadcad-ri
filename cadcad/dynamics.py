@@ -17,7 +17,7 @@ class Block():
 
     Attributes
     ----------
-    dtype: type
+    function: type
         type of the dimension
     name : str
         name of the dimension (optional)
@@ -25,8 +25,11 @@ class Block():
         optional description of the dimension (optional)
     """
 
-    __function: Callable[[Union[Point, Collection[Point]], Optional[Space]],
-                         Union[Point, Collection[Point]]]
+    __function: Union[
+        Callable[[Union[Point, Collection[Point]], Optional[Space]],
+                 Union[Point, Collection[Point]]],
+        Callable[[Union[Point, Collection[Point]]], Union[Point,
+                                                          Collection[Point]]]]
     __domains: Union[Space, Collection[Space]]
     __codomains: Union[Space, Collection[Space]]
     __param_space: Optional[Space] = None
@@ -37,8 +40,10 @@ class Block():
     @property
     def function(
         self
-    ) -> Callable[[Union[Point, Collection[Point]], Optional[Space]], Union[
-            Point, Collection[Point]]]:
+    ) -> Union[Callable[[Union[Point, Collection[Point]], Optional[Space]],
+                        Union[Point, Collection[Point]]], Callable[
+                            [Union[Point, Collection[Point]]], Union[
+                                Point, Collection[Point]]]]:
         """Get the function of the block."""
         return self.__function
 
@@ -185,7 +190,8 @@ class Block():
 
         Args:
             points (Union[Point, Collection[Point]]): input points for the block's function
-
+        Raises:
+            ValueError: if any point doesn't conform to the space(s)
         Returns:
             Union[Point, Collection[Point]]: output points
         """
@@ -205,7 +211,10 @@ class Block():
             raise TypeError(
                 "Inapropriate argument for points on the map method")
 
-        result = self.function(points, self.param_space)
+        if self.param_space:
+            result = self.function(points, self.param_space)
+        else:
+            result = self.function(points)
 
         if isinstance(result, Point) and isinstance(self.codomains, Space):
             if not result.space.is_equivalent(self.codomains):
