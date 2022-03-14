@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from copy import deepcopy
 from dataclasses import dataclass
-from typing import Optional, Tuple, Dict
+from typing import Optional, Collection, Dict
 
 from cadcad.errors import FreezingError, CopyError
 
@@ -15,31 +15,29 @@ class Space():
 
     Attributes
     ----------
-    dimensions: Dict[str, Dimension]
+    dim_tuple (Tuple[Dimension]):
         dictionary of dimension names to dimensions that make up the set of dimensions of the space
     name: str
         name of the space
-    description: str (optional)
-        description of the space
+    description: str
+        description of the space. (optional)
+    dim_names Tuple[str]:
+        _description_ (optional). Defaults to None.
     frozen : bool
         whether the dimension is immutable or not
+
+    Raises:
+            ValueError: if there is a collision of dimension names
+            ValueError: if there is a length mismatch between dim_tuple and dim_names
     """
 
     def __init__(self,
-                 dim_tuple: Tuple[Dimension, ...],
+                 dim_tuple: Collection[Dimension],
                  name: str,
                  description: str = "",
-                 dim_names: Optional[Tuple[str, ...]] = None,
+                 dim_names: Optional[Collection[str]] = None,
                  frozen: bool = False):
-        """Build a space based on a tuple of dimensions.
-
-        Args:
-            dim_tuple (Tuple[Dimension]): _description_
-            dim_names (Optional[Tuple[str]], optional): _description_. Defaults to None.
-        Raises:
-            ValueError: if there is a collision of dimension names
-            ValueError: if there is a length mismatch between dim_tuple and dim_names
-        """
+        """Build a space based on a tuple of dimensions."""
         self.__frozen: bool = frozen
         self.__name = name
         self.__description = description
@@ -137,7 +135,7 @@ class Space():
         del self.dimensions[dim_name]
 
     def augment(self,
-                dims: Tuple[Dimension, ...],
+                dims: Collection[Dimension],
                 auto_naming: bool = False) -> Space:
         """Derive a new mutable space from self by adding more dimensions.
 
@@ -156,7 +154,7 @@ class Space():
 
         return new_space
 
-    def subspace(self, subdims: Tuple[str, ...]) -> Space:
+    def subspace(self, subdims: Collection[str]) -> Space:
         """Make a mutable subspace with dimensions subdims.
 
         If there is no dimension in subdims that are present in self, it returns an empty Space.
@@ -304,7 +302,7 @@ class Dimension():
     name : str
         name of the dimension
     description : str
-        optional description of the dimension
+        optional description of the dimension (optional)
     frozen : bool
         whether the dimension is immutable or not
     """
