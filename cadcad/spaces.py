@@ -4,7 +4,8 @@ from __future__ import annotations
 
 from copy import deepcopy
 from dataclasses import dataclass
-from typing import Optional, Collection, Dict
+from typing import Optional, Dict
+from collections.abc import Sequence
 
 from cadcad.errors import FreezingError, CopyError
 
@@ -32,10 +33,10 @@ class Space():
     """
 
     def __init__(self,
-                 dim_tuple: Collection[Dimension],
+                 dim_tuple: Sequence[Dimension],
                  name: str,
                  description: str = "",
-                 dim_names: Optional[Collection[str]] = None,
+                 dim_names: Optional[Sequence[str]] = None,
                  frozen: bool = False):
         """Build a space based on a tuple of dimensions."""
         self.__frozen: bool = frozen
@@ -135,7 +136,7 @@ class Space():
         del self.dimensions[dim_name]
 
     def augment(self,
-                dims: Collection[Dimension],
+                dims: Sequence[Dimension],
                 auto_naming: bool = False) -> Space:
         """Derive a new mutable space from self by adding more dimensions.
 
@@ -154,7 +155,7 @@ class Space():
 
         return new_space
 
-    def subspace(self, subdims: Collection[str]) -> Space:
+    def subspace(self, subdims: Sequence[str]) -> Space:
         """Make a mutable subspace with dimensions subdims.
 
         If there is no dimension in subdims that are present in self, it returns an empty Space.
