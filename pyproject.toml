@@ -11,6 +11,7 @@ authors = [
 [tool.poetry.dependencies]
 python = ">=3.8, <4.0"
 tqdm = "^4.62.3"
+frozendict = "^2.3.0"
 
 [tool.poetry.dev-dependencies]
 pytest = "*"
