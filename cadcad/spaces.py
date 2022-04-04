@@ -2,10 +2,9 @@
 
 from __future__ import annotations
 
+import json
 from copy import deepcopy
-from typing import Iterator, Optional, Sequence, Dict, Union, Any
-
-from frozendict import frozendict
+from typing import Iterator, Optional, Sequence, Dict, Union, Any, List
 
 from cadcad.errors import FreezingError, CopyError
 
@@ -33,7 +32,7 @@ class Space():
         self.__name = name
         self.__description = description
 
-        for value in Space.flatten_dims(schema):
+        for value in Space.flatten_schema_types(schema):
             if not isinstance(type, type(value)):
                 raise ValueError(
                     "The schema can only contain string to type pairs.")
@@ -41,9 +40,9 @@ class Space():
         self.__schema: Dict[str, Union[Dict[str, Any], type]] = schema
 
     @property
-    def schema(self) -> frozendict:
-        """Get the schema of the space."""
-        return frozendict(self.__schema)
+    def schema(self) -> str:
+        """Get the schema of the space as a string view."""
+        return json.dumps(self.__schema, indent=4, default=str)
 
     @property
     def name(self) -> str:
@@ -96,7 +95,7 @@ class Space():
             raise FreezingError(Space)
 
         for key, value in dimensions.items():
-            if key in self.schema.keys():
+            if key in self.__schema.keys():
                 raise ValueError(f"Collision of dimension names. \
                 Rename the key {key} of your dimensions dictionary.")
 
@@ -111,7 +110,11 @@ class Space():
         if self.is_frozen():
             raise FreezingError(Space)
 
-        del self.__schema[dim_name]
+        try:
+            del self.__schema[dim_name]
+        except KeyError:
+            print(f'The dimension "{dim_name}" is not present in {self.name}')
+            raise
 
     def subspace(self, subdims: Sequence[str]) -> Space:
         """Make a mutable subspace with dimensions subdims.
@@ -128,7 +131,7 @@ class Space():
         internal_dict = deepcopy(self.__dict__)
         internal_dict["_Space__frozen"] = False
 
-        for dim_name in self.schema.keys():
+        for dim_name in self.__schema.keys():
             if dim_name not in subdims:
                 del internal_dict["_Space__schema"][dim_name]
 
@@ -144,9 +147,9 @@ class Space():
         Returns:
             bool: whether the space is empty or not
         """
-        return not bool(self.schema)
+        return not bool(self.__schema)
 
-    def is_equivalent(self, other: Space) -> bool:
+    def is_equivalent(self, other: Any) -> bool:
         """Check if a space is equivalent to another space.
 
         Equivalence is having the same dimensions but not necessarily the other atributes.
@@ -201,8 +204,9 @@ class Space():
 
     def __str__(self) -> str:
         """Return a string representation of a space."""
-        str_result = ""
-        dims = tuple(self.schema.keys())
+        newline = '\n'
+        str_result = ''
+        dims = Space.flatten_schema_keys(self.__schema)
 
         if self.is_frozen():
             str_result += "Frozen space "
@@ -210,22 +214,22 @@ class Space():
             str_result += "Unfrozen space "
 
         str_result += f"{self.name} "
-        str_result += f"has dimensions {dims}"
+        str_result += f"has dimensions {dims} "
 
         if self.description:
-            str_result += f"and description {self.description}"
+            str_result += f"and description:{newline}{self.description}{newline}"
 
         return str_result
 
-    def __mul__(self: Space, other: Space) -> Space:
+    def __mul__(self: Space, other: Any) -> Space:
         """Do a cartesian product of self and other."""
         if isinstance(other, Space):
             new_name = f"{self.name} x {other.name}"
 
             new_space = Space({}, new_name)
 
-            new_space.add_dimensions(self.schema)
-            new_space.add_dimensions(other.schema)
+            new_space.add_dimensions(self.__schema)
+            new_space.add_dimensions(other._Space__schema)  # type: ignore
 
             return new_space
 
@@ -233,10 +237,10 @@ class Space():
 
     def __getitem__(self, key: str) -> Union[Dict[str, Any], type]:
         """Get dimension on space through indexing."""
-        return self.schema[key]
+        return self.__schema[key]
 
     @staticmethod
-    def flatten_dims(
+    def flatten_schema_types(
             dimensions: Dict[str, Union[Dict[str, Any],
                                         type]]) -> Iterator[type]:
         """Yield the values of the nested dictionary that is the dimensions of a space.
@@ -249,6 +253,28 @@ class Space():
         """
         for value in dimensions.values():
             if isinstance(value, dict):
-                yield from Space.flatten_dims(value)
+                yield from Space.flatten_schema_types(value)
             else:
                 yield value
+
+    @staticmethod
+    def flatten_schema_keys(
+            dimensions: Dict[str, Union[Dict[str, Any], type]]) -> List[str]:
+        """Yield the values of the nested dictionary that is the dimensions of a space.
+
+        Args:
+            dimensions (Dict[str, Union[Dict[str, Any], type]]): the dimensions of the space
+
+        Yields:
+            List[str]: list of dimension names from the dimensions dictionary
+        """
+        schema_keys = []
+
+        for key, value in dimensions.items():
+            if isinstance(value, dict):
+                schema_keys.append(key)
+                schema_keys += Space.flatten_schema_keys(value)
+            else:
+                schema_keys.append(key)
+
+        return schema_keys
