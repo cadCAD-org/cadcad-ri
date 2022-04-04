@@ -6,6 +6,7 @@ import json
 from copy import deepcopy
 from typing import Iterator, Optional, Sequence, Dict, Union, Any, List
 
+from frozendict import frozendict
 from cadcad.errors import FreezingError, CopyError
 
 
@@ -40,9 +41,9 @@ class Space():
         self.__schema: Dict[str, Union[Dict[str, Any], type]] = schema
 
     @property
-    def schema(self) -> str:
-        """Get the schema of the space as a string view."""
-        return json.dumps(self.__schema, indent=4, default=str)
+    def schema(self) -> frozendict:
+        """Get the schema of the space as a immutable view."""
+        return frozendict(self.__schema)
 
     @property
     def name(self) -> str:
@@ -86,8 +87,7 @@ class Space():
         """Add a dimension to an existing space's schema.
 
         Args:
-            dim (Dict[str, type]): dimension to add
-            new_name (Optional[str]): name to be given to a dimension if there is a name collision
+            dimensions (Dict[str, Union[Dict[str, Any], type]]): dimensions to add as a dictionary
         Raises:
             ValueError: if there is a collision of dimension names and a new name is not given
         """
@@ -178,6 +178,10 @@ class Space():
         new_space.__dict__.update(internal_dict)
         return new_space
 
+    def pretty_schema(self) -> str:
+        """Return pretty string repreentation of the schema."""
+        return json.dumps(self.__schema, indent=4, default=str)
+
     def __copy__(self) -> None:
         """Forbidden copy method."""
         raise CopyError(Space)
@@ -229,7 +233,7 @@ class Space():
             new_space = Space({}, new_name)
 
             new_space.add_dimensions(self.__schema)
-            new_space.add_dimensions(other._Space__schema)  # type: ignore
+            new_space.add_dimensions(other.schema)
 
             return new_space
 

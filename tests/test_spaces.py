@@ -46,7 +46,7 @@ def test_space_schema_view() -> None:
     """Test the immutable view of space's schemas."""
     my_space = Space({'a': np.double, 'b': np.double}, "MySpace")
 
-    assert my_space.schema == '{\n    "a": "<class \'numpy.float64\'>",\n    "b": "<class \'numpy.float64\'>"\n}'  # noqa: E501
+    assert my_space.pretty_schema() == '{\n    "a": "<class \'numpy.float64\'>",\n    "b": "<class \'numpy.float64\'>"\n}'  # noqa: E501
 
 
 def test_space_freezing() -> None:
@@ -96,7 +96,7 @@ def test_subspace_spaces() -> None:
 
     new_space = my_space.subspace(("a", ))
 
-    assert new_space.schema == '{\n    "a": "<class \'numpy.float64\'>"\n}'
+    assert new_space.pretty_schema() == '{\n    "a": "<class \'numpy.float64\'>"\n}'
 
     # Subspaces are always unfrozen
     assert not new_space.is_frozen()
@@ -174,7 +174,7 @@ def test_space_mult() -> None:
     assert product1.name == "MySpace x OtherSpace"
     assert not product1.is_frozen()
     assert not product1.is_empty()
-    assert product1.schema == '{\n    "a": "<class \'numpy.float64\'>",\n    "c": "<class \'int\'>"\n}'  # noqa: E501
+    assert product1.pretty_schema() == '{\n    "a": "<class \'numpy.float64\'>",\n    "c": "<class \'int\'>"\n}'  # noqa: E501
 
     # The empty space is the neutral (or identity) element of the multiplication
     product3 = my_space * Space({}, "EmptySpace")
@@ -194,11 +194,11 @@ def test_drop_dim() -> None:
     """Test removing dimensions from spaces by the dimension name."""
     my_space = Space({'a': np.double, 'b': np.double}, "MySpace")
 
-    assert my_space.schema == '{\n    "a": "<class \'numpy.float64\'>",\n    "b": "<class \'numpy.float64\'>"\n}'  # noqa: E501
+    assert my_space.pretty_schema() == '{\n    "a": "<class \'numpy.float64\'>",\n    "b": "<class \'numpy.float64\'>"\n}'  # noqa: E501
 
     my_space.drop_dimension("b")
 
-    assert my_space.schema == '{\n    "a": "<class \'numpy.float64\'>"\n}'  # noqa: E501
+    assert my_space.pretty_schema() == '{\n    "a": "<class \'numpy.float64\'>"\n}'  # noqa: E501
 
     my_space2 = Space({'a': np.int8}, "MySpace2", frozen=True)
 
