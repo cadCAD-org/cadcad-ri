@@ -34,14 +34,14 @@ class Point():
         internal_data = {}
 
         for key, value in data.items():
-            if key in space._Space__schema.keys() and isinstance(
-                    space._Space__schema[key], type) and isinstance(
-                        value, space._Space__schema[key]):
+            if key in space.schema.keys() and isinstance(
+                    space.schema[key], type) and isinstance(
+                        value, space.schema[key]):
                 internal_data[key] = value
             else:
                 expected_schema = [
                     f"{name} -> {dim}"
-                    for name, dim in space._Space__schema.items()
+                    for name, dim in space.schema.items()
                 ]
                 raise SchemaError(space.name, expected_schema,
                                   f"{key} -> {type(value)}")
