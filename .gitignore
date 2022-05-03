@@ -128,3 +128,5 @@ cython_debug/
 
 # VSCode
 .vscode
+
+scratchpad.ipynb

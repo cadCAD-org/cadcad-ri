@@ -4,25 +4,27 @@ from __future__ import annotations
 
 import json
 from copy import deepcopy
-from typing import Iterator, Optional, Sequence, Dict, Union, Any, List
+from typing import Any, Callable, Dict, Iterator, List, Optional, Sequence, Union
 
 from frozendict import frozendict
-from cadcad.errors import FreezingError, CopyError
+
+from cadcad.errors import CopyError, FreezingError
 
 
 class Space():
     """Spaces are the most fundamental building blocks of cadCAD."""
 
     def __init__(self,
-                 schema: Dict[str, Union[Dict[str, Any], type]],
                  name: str,
+                 schema: Dict[str, Union[Dict[str, Any], type]],
                  description: Optional[str] = None,
+                 constraints: Dict[str, Block] = {},
                  frozen: bool = False):
         """Construct a cadCAD space.
 
         Args:
-            schema (Dict[str, Union[Dict[str, Any], type]]): the type schema of the space
             name (str): the name of the space
+            schema (Dict[str, Union[Dict[str, Any], type]]): the type schema of the space
             description (Optional[str]): the description of the space. Defaults to None.
             frozen (bool, optional): wether the space is frozen or not. Defaults to False.
 
@@ -49,6 +51,11 @@ class Space():
     def name(self) -> str:
         """Get the name of the space."""
         return self.__name
+
+    @property
+    def constraint(self) -> str:
+        """Get the name of the space."""
+        return self.constraint
 
     @name.setter
     def name(self, name: str) -> None:
@@ -81,6 +88,35 @@ class Space():
         NOTE: This action is irreversible.
         """
         self.__frozen = True
+
+    my_space = Space('a', {
+        'a': int
+    }).add_constraint('is_positive', is_positive)
+
+    def is_positive():
+        pass
+
+    def add_constraint(self, constraint_name: str,
+                       constraint_func: Block) -> None:
+        if self.is_frozen():
+            raise FreezingError(Space)
+        elif isinstance(constraint_name, str) and isinstance(
+                constraint_func, Callable):
+            # TODO: Crete a block here
+            self.constraint[constraint_name] = constraint_func
+        else:
+            raise
+
+    def create_constraint(self, constraint_name: str,
+                          constraint_func: Callable) -> None:
+        if self.is_frozen():
+            raise FreezingError(Space)
+        elif isinstance(constraint_name, str) and isinstance(
+                constraint_func, Callable):
+            # TODO: Crete a block here
+            self.constraint[constraint_name] = constraint_func
+        else:
+            raise
 
     def add_dimensions(
             self, dimensions: Dict[str, Union[Dict[str, Any], type]]) -> None:
