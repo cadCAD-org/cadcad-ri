@@ -1,4 +1,7 @@
-"""Dimensions and Spaces definitions."""
+"""Dimensions and Spaces definitions.
+
+To be redefined as a class factory
+"""
 
 from __future__ import annotations
 
