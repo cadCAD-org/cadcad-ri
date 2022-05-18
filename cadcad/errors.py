@@ -17,17 +17,40 @@ class CopyError(Exception):
 
     def __init__(self, obj_type: type) -> None:
         """Raise with default message."""
-        self.message = f"Attempted to copy a {obj_type} object through the copy library."
+        self.message = (
+            f"Attempted to copy a {obj_type} object through the copy library."
+        )
         super().__init__(self.message)
 
 
 class SchemaError(Exception):
     """Exception raised when trying to instantiate a cadCAD point not obeying the space schema."""
 
-    def __init__(self, space_name: str, expected: List[str],
-                 given: str) -> None:
+    def __init__(self, space_name: str, expected: List[str], given: str) -> None:
         """Raise with default message."""
-        self.message = f"Wrong schema for space {space_name}. " +\
-            f"Expected one of {expected}, but was given [{given}]."
+        self.message = (
+            f"Wrong schema for space {space_name}. "
+            + f"Expected one of {expected}, but was given [{given}]."
+        )
+
+        super().__init__(self.message)
+
+
+class InstanceError(Exception):
+    """Exception raised when trying to instantiate a cadCAD space type."""
+
+    def __init__(self) -> None:
+        """Raise with default message."""
+        self.message = "Attempted to instance a space type."
+
+        super().__init__(self.message)
+
+
+class IllFormedError(Exception):
+    """Exception raised when trying to decorate an ill formed class with @space."""
+
+    def __init__(self) -> None:
+        """Raise with default message."""
+        self.message = "Attempted to decorate an ill formed class."
 
         super().__init__(self.message)

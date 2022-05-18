@@ -92,34 +92,34 @@ class Space():
         """
         self.__frozen = True
 
-    my_space = Space('a', {
-        'a': int
-    }).add_constraint('is_positive', is_positive)
+    # my_space = Space('a', {
+    #     'a': int
+    # }).add_constraint('is_positive', is_positive)
 
-    def is_positive():
-        pass
+    # def is_positive():
+    #     pass
 
-    def add_constraint(self, constraint_name: str,
-                       constraint_func: Block) -> None:
-        if self.is_frozen():
-            raise FreezingError(Space)
-        elif isinstance(constraint_name, str) and isinstance(
-                constraint_func, Callable):
-            # TODO: Crete a block here
-            self.constraint[constraint_name] = constraint_func
-        else:
-            raise
+    # def add_constraint(self, constraint_name: str,
+    #                    constraint_func: Block) -> None:
+    #     if self.is_frozen():
+    #         raise FreezingError(Space)
+    #     elif isinstance(constraint_name, str) and isinstance(
+    #             constraint_func, Callable):
+    #         # TODO: Crete a block here
+    #         self.constraint[constraint_name] = constraint_func
+    #     else:
+    #         raise
 
-    def create_constraint(self, constraint_name: str,
-                          constraint_func: Callable) -> None:
-        if self.is_frozen():
-            raise FreezingError(Space)
-        elif isinstance(constraint_name, str) and isinstance(
-                constraint_func, Callable):
-            # TODO: Crete a block here
-            self.constraint[constraint_name] = constraint_func
-        else:
-            raise
+    # def create_constraint(self, constraint_name: str,
+    #                       constraint_func: Callable) -> None:
+    #     if self.is_frozen():
+    #         raise FreezingError(Space)
+    #     elif isinstance(constraint_name, str) and isinstance(
+    #             constraint_func, Callable):
+    #         # TODO: Crete a block here
+    #         self.constraint[constraint_name] = constraint_func
+    #     else:
+    #         raise
 
     def add_dimensions(
             self, dimensions: Dict[str, Union[Dict[str, Any], type]]) -> None:
