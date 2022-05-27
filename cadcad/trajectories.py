@@ -4,7 +4,7 @@ import json
 from typing import Any, Dict
 from frozendict import frozendict
 
-from cadcad.spaces import Space
+from cadcad.old_spaces import Space
 from cadcad.errors import SchemaError
 
 

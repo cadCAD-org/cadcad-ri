@@ -2,18 +2,18 @@
 
 from __future__ import annotations
 
+from collections.abc import Sequence
 from copy import deepcopy
 from dataclasses import dataclass
-from typing import Optional, Callable, Union
-from collections.abc import Sequence
+from typing import Callable, Optional, Union
 
+from cadcad.errors import CopyError, FreezingError
+from cadcad.old_spaces import Space
 from cadcad.trajectories import Point
-from cadcad.spaces import Space
-from cadcad.errors import FreezingError, CopyError
 
 
 @dataclass
-class Block():
+class Block:
     """Blocks in cadCAD.
 
     Attributes
@@ -35,10 +35,12 @@ class Block():
     """
 
     __function: Union[
-        Callable[[Union[Point, Sequence[Point]], Optional[Space]],
-                 Union[Point, Sequence[Point]]],
-        Callable[[Union[Point, Sequence[Point]]], Union[Point,
-                                                        Sequence[Point]]]]
+        Callable[
+            [Union[Point, Sequence[Point]], Optional[Space]],
+            Union[Point, Sequence[Point]],
+        ],
+        Callable[[Union[Point, Sequence[Point]]], Union[Point, Sequence[Point]]],
+    ]
     __domains: Union[Space, Sequence[Space]]
     __codomains: Union[Space, Sequence[Space]]
     __param_space: Optional[Space] = None
@@ -48,19 +50,24 @@ class Block():
 
     @property
     def function(
-        self
-    ) -> Union[Callable[[Union[Point, Sequence[Point]], Optional[Space]],
-                        Union[Point, Sequence[Point]]], Callable[
-                            [Union[Point, Sequence[Point]]], Union[
-                                Point, Sequence[Point]]]]:
+        self,
+    ) -> Union[
+        Callable[
+            [Union[Point, Sequence[Point]], Optional[Space]],
+            Union[Point, Sequence[Point]],
+        ],
+        Callable[[Union[Point, Sequence[Point]]], Union[Point, Sequence[Point]]],
+    ]:
         """Get the function of the block."""
         return self.__function
 
     @function.setter
     def function(
         self,
-        function: Callable[[Union[Point, Sequence[Point]], Optional[Space]],
-                           Union[Point, Sequence[Point]]]
+        function: Callable[
+            [Union[Point, Sequence[Point]], Optional[Space]],
+            Union[Point, Sequence[Point]],
+        ],
     ) -> None:
         """Set the function of the block."""
         if not self.__frozen:
@@ -193,8 +200,8 @@ class Block():
         return str_result
 
     def map(
-        self, points: Union[Point,
-                            Sequence[Point]]) -> Union[Point, Sequence[Point]]:
+        self, points: Union[Point, Sequence[Point]]
+    ) -> Union[Point, Sequence[Point]]:
         """Execute the block's function onto points.
 
         Args:
@@ -209,22 +216,23 @@ class Block():
                 raise ValueError(
                     "The point provided does not match the schema of the domain"
                 )
-        elif isinstance(points, Point) and isinstance(self.domains, Sequence) \
-                and len(self.domains) == 1:
+        elif (
+            isinstance(points, Point)
+            and isinstance(self.domains, Sequence)
+            and len(self.domains) == 1
+        ):
             if not points.space.is_equivalent(self.domains[0]):
                 raise ValueError(
                     "The point provided does not match the schema of the domain"
                 )
-        elif isinstance(points, Sequence) and isinstance(
-                self.domains, Sequence):
+        elif isinstance(points, Sequence) and isinstance(self.domains, Sequence):
             for point, space in zip(points, self.domains):
                 if not point.space.is_equivalent(space):
                     raise ValueError(
                         "The point provided does not match the schema of the domain"
                     )
         else:
-            raise TypeError(
-                "Inapropriate argument for points on the map method")
+            raise TypeError("Inapropriate argument for points on the map method")
 
         if self.param_space:
             result = self.function(points, self.param_space)
@@ -236,14 +244,16 @@ class Block():
                 raise ValueError(
                     "The point generated does not match the schema of the codomain"
                 )
-        elif isinstance(result, Point) and isinstance(self.domains, Sequence) \
-                and len(self.domains) == 1:
+        elif (
+            isinstance(result, Point)
+            and isinstance(self.domains, Sequence)
+            and len(self.domains) == 1
+        ):
             if not result.space.is_equivalent(self.domains[0]):
                 raise ValueError(
                     "The point provided does not match the schema of the domain"
                 )
-        elif isinstance(result, Sequence) and isinstance(
-                self.codomains, Sequence):
+        elif isinstance(result, Sequence) and isinstance(self.codomains, Sequence):
             for res, space in zip(result, self.codomains):
                 if not res.space.is_equivalent(space):
                     raise ValueError(
