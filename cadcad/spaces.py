@@ -1,8 +1,6 @@
-# pylint: disable=import-outside-toplevel
 """Definition of Spaces"""
 
 import logging
-import sys
 from typing import Any, Dict, Union, get_type_hints
 
 from cadcad.errors import IllFormedError, InstanceError
@@ -57,6 +55,8 @@ def space(cls: type) -> type:
     cls.name = classmethod(__name)  # type: ignore
     cls.copy = classmethod(__copy)  # type: ignore
     cls.rename_dims = classmethod(__rename_dims)  # type: ignore
+    cls.is_empty = classmethod(__is_empty)  # type: ignore
+    cls.unroll_schema = classmethod(__unroll_schema)  # type: ignore
 
     setattr(cls, __init__.__name__, __init__)
 
@@ -64,11 +64,12 @@ def space(cls: type) -> type:
         """Fake class to enable overloading operators on types"""
 
     NewSpace.__name__ = cls.__name__
+    setattr(NewSpace, "__annotations__", cls.__annotations__)
 
     return NewSpace
 
 
-def __dimensions(cls: type, as_types: bool = False) -> dict[str, Union[type, str]]:
+def __dimensions(cls: type, as_types: bool = False) -> Dict[str, Union[type, str]]:
     """_summary_
 
     Parameters
@@ -83,26 +84,68 @@ def __dimensions(cls: type, as_types: bool = False) -> dict[str, Union[type, str
     """
     hints = get_type_hints(cls)
 
-    for key, value in hints.items():
-        if str(value)[0] == "<":
-            str_value = str(value).split()[1][1:-2]
-            if as_types:
-                hints[key] = eval(
-                    str_value, sys.modules[cls.__module__].__dict__, dict(vars(cls))
-                )
-            else:
-                hints[key] = str_value
+    if not as_types:
+        for key, value in hints.items():
+            hints[key] = value.__name__
 
     return hints
 
 
+def __unroll_schema(cls: type) -> Dict[str, Union[dict, str]]:
+    """_summary_
+
+    Parameters
+    ----------
+    cls : type
+        _description_
+
+    Returns
+    -------
+    Dict[str, Union[dict, type]]
+        _description_
+    """
+    dims = __dimensions(cls, as_types=True)
+    dims_str = __dimensions(cls)
+
+    for key, value in dims.items():
+        if isinstance(value, MetaSpace):
+            dims_str[key] = __unroll_schema(value)  # type: ignore
+
+    return dims_str  # type: ignore
+
+
 def __rename_dims(cls: type, rename_dict: Dict[str, str]) -> type:
+    """_summary_
+
+    Parameters
+    ----------
+    cls : type
+        _description_
+    rename_dict : Dict[str, str]
+        _description_
+
+    Returns
+    -------
+    type
+        _description_
+    """
     new_space = __copy(cls)
-    old_schema = __dimensions(new_space, as_types=True)
-    new_annotation = {}
-    for key, value in rename_dict.items():
-        new_annotation[value] = old_schema[key]
-    setattr(new_space, "__annotations__", new_annotation)
+    schema = __dimensions(new_space, as_types=True)
+
+    for old_key, new_key in rename_dict.items():
+        if new_key in schema:
+            raise KeyError(f"The dimension {new_key} already exists in {cls.__name__}")
+
+        try:
+            schema[new_key] = schema.pop(old_key)
+        except KeyError as err:
+            log.error("Impossible to rename. Dimension %s not found.", old_key)
+            raise err
+
+    new_space.__annotations__.clear()
+
+    setattr(new_space, "__annotations__", schema)
+
     return new_space
 
 
@@ -119,7 +162,7 @@ def __copy(cls: type) -> type:
     type
         _description_
     """
-    new_space = type(f"New{cls.__name__}", cls.__bases__, dict(cls.__dict__))
+    new_space = type(cls.__name__, cls.__bases__, dict(cls.__dict__))
     return space(new_space)
 
 
@@ -154,6 +197,9 @@ def __cartesian(cls: type, other: type) -> type:
     type
         _description_
     """
+    if __is_empty(other):
+        return cls
+
     new_annotation = {f"{cls.__name__}": cls, f"{other.__name__}": other}
 
     new_space = type(f"{cls.__name__}x{other.__name__}", (object,), dict(cls.__dict__))
@@ -184,9 +230,6 @@ def __power(cls: type, dimension_n: int) -> type:
         _description_
     """
     if isinstance(dimension_n, int) and dimension_n == 0:
-        # Avoid circular importing
-        from cadcad.builtins import EmptySpace
-
         return EmptySpace
 
     if isinstance(dimension_n, int) and dimension_n == 1:
@@ -202,5 +245,48 @@ def __power(cls: type, dimension_n: int) -> type:
     raise TypeError("The left hand operand must be a positive integer")
 
 
+def __is_empty(cls: type) -> bool:
+    """_summary_
+
+    Parameters
+    ----------
+    cls : type
+        _description_
+
+    Returns
+    -------
+    bool
+        _description_
+    """
+    return not bool(__dimensions(cls, as_types=True))
+
+
 def __init__(self: Any, *args: Any, **kwargs: Any) -> None:  # noqa: N807
     raise InstanceError
+
+
+@space
+class EmptySpace:
+    """A space with no dimensions.
+    It is the multiplicative identity in the algebra of spaces."""
+
+
+@space
+class Real:
+    """The one dimensional space of real numbers."""
+
+    real: float
+
+
+@space
+class Integer:
+    """The one dimensional space of integer numbers."""
+
+    integer: int
+
+
+@space
+class Bit:
+    """The one dimensional space of bits."""
+
+    bit: bool
