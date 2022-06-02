@@ -1,7 +1,8 @@
 """Definition of Spaces"""
 
 import logging
-from typing import Any, Dict, Union, get_type_hints
+from copy import deepcopy
+from typing import Any, Dict, Generator, Union, get_type_hints
 
 from cadcad.errors import IllFormedError, InstanceError
 
@@ -162,7 +163,8 @@ def __copy(cls: type) -> type:
     type
         _description_
     """
-    new_space = type(cls.__name__, cls.__bases__, dict(cls.__dict__))
+    cls_dict = deepcopy(dict(cls.__dict__))
+    new_space = type(cls.__name__, (object,), cls_dict)
     return space(new_space)
 
 
@@ -197,15 +199,27 @@ def __cartesian(cls: type, other: type) -> type:
     type
         _description_
     """
+    if not isinstance(other, MetaSpace):
+        raise TypeError("The left hand operand must be a Space")
+
     if __is_empty(other):
         return cls
 
-    new_annotation = {f"{cls.__name__}": cls, f"{other.__name__}": other}
+    other_dims = __dimensions(other, as_types=True)
 
-    new_space = type(f"{cls.__name__}x{other.__name__}", (object,), dict(cls.__dict__))
-    setattr(new_space, "__annotations__", new_annotation)
+    new_space = __copy(cls)
+    new_space.__name__ = f"{cls.__name__}x{other.__name__}"
 
-    return space(new_space)
+    for dim_name, dim_type in other_dims.items():
+        if dim_name in new_space.__annotations__:
+            for new_key in __generate_key(dim_name):
+                if new_key not in new_space.__annotations__:
+                    new_space.__annotations__[new_key] = dim_type
+                    break
+        else:
+            new_space.__annotations__[dim_name] = dim_type
+
+    return new_space
 
 
 def __power(cls: type, dimension_n: int) -> type:
@@ -263,6 +277,25 @@ def __is_empty(cls: type) -> bool:
 
 def __init__(self: Any, *args: Any, **kwargs: Any) -> None:  # noqa: N807
     raise InstanceError
+
+
+def __generate_key(existing_key: str) -> Generator:
+    """_summary_
+
+    Parameters
+    ----------
+    existing_key : str
+        _description_
+
+    Yields
+    ------
+    Generator
+        _description_
+    """
+    num = 1
+    while True:
+        yield f"{existing_key}_{num}"
+        num += 1
 
 
 @space
