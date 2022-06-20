@@ -2,7 +2,7 @@
 
 import logging
 from copy import deepcopy
-from typing import Any, Dict, Generator, Union, get_type_hints
+from typing import Any, Dict, Generator, List, Union, get_type_hints
 
 from cadcad.errors import IllFormedError, InstanceError
 
@@ -31,6 +31,9 @@ class MetaSpace(type):
     def __pow__(cls: type, dimension_n: int) -> type:
         return cls.pow(dimension_n)  # type: ignore
 
+    def __add__(cls: type, other: type) -> type:
+        return cls.add(other)  # type: ignore
+
 
 # Add metrics, constraints and projections
 def space(cls: type) -> type:
@@ -58,6 +61,8 @@ def space(cls: type) -> type:
     cls.rename_dims = classmethod(__rename_dims)  # type: ignore
     cls.is_empty = classmethod(__is_empty)  # type: ignore
     cls.unroll_schema = classmethod(__unroll_schema)  # type: ignore
+    cls.add = classmethod(__add)  # type: ignore
+    cls.nest = classmethod(__nest)  # type: ignore
 
     setattr(cls, __init__.__name__, __init__)
 
@@ -68,6 +73,31 @@ def space(cls: type) -> type:
     setattr(NewSpace, "__annotations__", cls.__annotations__)
 
     return NewSpace
+
+
+def multiply(operands: List[type]) -> type:
+    """_summary_
+
+    Parameters
+    ----------
+    operands : List[MetaSpace]
+        _description_
+
+    Returns
+    -------
+    type
+        _description_
+    """
+    new_space = __copy(EmptySpace)
+    new_space.__name__ = "x".join([f"{cls.__name__}" for cls in operands])
+
+    new_annotation = {
+        f"{cls.__name__.lower()}_{i}": deepcopy(cls) for i, cls in enumerate(operands)
+    }
+
+    setattr(new_space, "__annotations__", new_annotation)
+
+    return new_space
 
 
 def __dimensions(cls: type, as_types: bool = False) -> Dict[str, Union[type, str]]:
@@ -205,19 +235,21 @@ def __cartesian(cls: type, other: type) -> type:
     if __is_empty(other):
         return cls
 
-    other_dims = __dimensions(other, as_types=True)
-
     new_space = __copy(cls)
-    new_space.__name__ = f"{cls.__name__}x{other.__name__}"
+    new_space.__annotations__.clear()
 
-    for dim_name, dim_type in other_dims.items():
-        if dim_name in new_space.__annotations__:
-            for new_key in __generate_key(dim_name):
-                if new_key not in new_space.__annotations__:
-                    new_space.__annotations__[new_key] = dim_type
-                    break
-        else:
-            new_space.__annotations__[dim_name] = dim_type
+    if cls.__name__ == other.__name__:
+        new_space.__annotations__ = {
+            f"{cls.__name__.lower()}_0": deepcopy(cls),
+            f"{other.__name__.lower()}_1": other,
+        }
+    else:
+        new_space.__annotations__ = {
+            cls.__name__.lower(): deepcopy(cls),
+            other.__name__.lower(): other,
+        }
+
+    new_space.__name__ = f"{cls.__name__}*{other.__name__}"
 
     return new_space
 
@@ -249,14 +281,80 @@ def __power(cls: type, dimension_n: int) -> type:
     if isinstance(dimension_n, int) and dimension_n == 1:
         return cls
 
-    if isinstance(dimension_n, int) and dimension_n > 0:
-        new_annotation = {f"{cls.__name__}_{i}": cls for i in range(dimension_n)}
+    if isinstance(dimension_n, int) and dimension_n > 1:
+        new_annotation = {
+            f"{cls.__name__.lower()}_{i}": deepcopy(cls) for i in range(dimension_n)
+        }
         new_space = type(f"{dimension_n}-{cls.__name__}", (object,), dict(cls.__dict__))
         setattr(new_space, "__annotations__", new_annotation)
 
         return space(new_space)
 
     raise TypeError("The left hand operand must be a positive integer")
+
+
+def __add(cls: type, other: type) -> type:
+    """_summary_
+
+    Parameters
+    ----------
+    cls : type
+        _description_
+    other : type
+        _description_
+
+    Returns
+    -------
+    type
+        _description_
+    """
+    if not isinstance(other, MetaSpace):
+        raise TypeError("The left hand operand must be a Space")
+
+    if __is_empty(other):
+        return cls
+
+    other_dims = __dimensions(other, as_types=True)
+
+    new_space = __copy(cls)
+    new_space.__name__ = f"{cls.__name__}+{other.__name__}"
+
+    for dim_name, dim_type in other_dims.items():
+        if dim_name in new_space.__annotations__:
+            for new_key in __generate_key(dim_name):
+                if new_key not in new_space.__annotations__:
+                    new_space.__annotations__[new_key] = dim_type
+                    break
+        else:
+            new_space.__annotations__[dim_name] = dim_type
+
+    return space(new_space)
+
+
+def __nest(cls: type, name_change: bool = True) -> type:
+    """_summary_
+
+    Parameters
+    ----------
+    cls : type
+        _description_
+    name_change : bool, optional
+        _description_, by default True
+
+    Returns
+    -------
+    type
+        _description_
+    """
+    new_space = __copy(cls)
+
+    if name_change:
+        new_space.__name__ = f"nested-{cls.__name__}"
+
+    new_space.__annotations__.clear()
+    new_space.__annotations__[cls.__name__] = deepcopy(cls)
+
+    return space(new_space)
 
 
 def __is_empty(cls: type) -> bool:
