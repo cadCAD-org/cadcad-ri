@@ -1,9 +1,11 @@
 """Points and Trajectories definitions."""
 
+import json
 from typing import Any, Dict
+from frozendict import frozendict
 
-from cadcad.spaces import Space
-from cadcad.errors import SchemaError, FreezingError
+from cadcad.old_spaces import Space
+from cadcad.errors import SchemaError
 
 
 class Point():
@@ -28,43 +30,40 @@ class Point():
             SchemaError: if there is a mismatch between the data and space's schema
         """
         self.__space: Space = space
-        self.__data: Dict[str, Any] = {}
+
+        internal_data = {}
 
         for key, value in data.items():
-            if key in space.dimensions.keys() and isinstance(
-                    value, space.dimensions[key].dtype):
-                self.__data[key] = value
+            if key in space.schema.keys() and isinstance(
+                    space.schema[key], type) and isinstance(
+                        value, space.schema[key]):
+                internal_data[key] = value
             else:
                 expected_schema = [
-                    f"{name} -> {dim.dtype}"
-                    for name, dim in space.dimensions.items()
+                    f"{name} -> {dim}"
+                    for name, dim in space.schema.items()
                 ]
                 raise SchemaError(space.name, expected_schema,
                                   f"{key} -> {type(value)}")
+
+        self.__data: Dict[str, Any] = frozendict(internal_data)
 
     @property
     def space(self) -> Space:
         """Get Space of the Point."""
         return self.__space
 
-    @space.setter
-    def space(self, change: Any) -> None:
-        """Forbid the setter."""
-        raise FreezingError(Point)
+    @property
+    def data(self) -> Dict[str, Any]:
+        """Get the data of the Point."""
+        return self.__data
 
     def __getitem__(self, key: str) -> Any:
         """Get data inside of the point through indexing."""
         return self.__data[key]
 
-    def __setitem__(self, key: str, value: Any) -> None:
-        """Forbid the setter."""
-        raise FreezingError(Point)
-
-    def __delitem__(self, key: str) -> None:
-        """Forbid the deleter."""
-        raise FreezingError(Point)
-
     def __str__(self) -> str:
         """Return a string representation of a point."""
         newline = '\n'
-        return f"Frozen point in space {self.space.name} has data{newline}{self.__data}{newline}"
+        data = json.dumps(dict(self.data), indent=4, default=str)
+        return f"Frozen point in space {self.space.name} has data{newline}{data}{newline}"
