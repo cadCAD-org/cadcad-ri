@@ -63,6 +63,7 @@ def space(cls: type) -> type:
     cls.unroll_schema = classmethod(__unroll_schema)  # type: ignore
     cls.add = classmethod(__add)  # type: ignore
     cls.nest = classmethod(__nest)  # type: ignore
+    cls.is_equivalent = classmethod(__is_equivalent)  # type: ignore
 
     setattr(cls, __init__.__name__, __init__)
 
@@ -232,8 +233,10 @@ def __cartesian(cls: type, other: type) -> type:
     if not isinstance(other, Space):
         raise TypeError("The left hand operand must be a Space")
 
-    if __is_empty(other) or __is_empty(cls):
+    if __is_empty(other):
         return cls
+    elif __is_empty(cls):
+        return other
 
     new_space = __copy(cls)
     new_space.__annotations__.clear()
@@ -311,8 +314,10 @@ def __add(cls: type, other: type) -> type:
     if not isinstance(other, Space):
         raise TypeError("The left hand operand must be a Space")
 
-    if __is_empty(other) or __is_empty(cls):
+    if __is_empty(other):
         return cls
+    elif __is_empty(cls):
+        return other
 
     other_dims = __dimensions(other, as_types=True)
 
@@ -394,6 +399,26 @@ def __generate_key(existing_key: str) -> Generator:
     while True:
         yield f"{existing_key}_{num}"
         num += 1
+
+
+def __is_equivalent(cls: type, other: type) -> bool:
+    """_summary_
+
+    Parameters
+    ----------
+    cls : type
+        _description_
+    other : type
+        _description_
+
+    Returns
+    -------
+    bool
+        _description_
+    """
+    return list(__dimensions(cls, True).values()) == list(
+        __dimensions(other, True).values()
+    )
 
 
 @space
