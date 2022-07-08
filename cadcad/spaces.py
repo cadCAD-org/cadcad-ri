@@ -9,7 +9,7 @@ from cadcad.errors import IllFormedError, InstanceError
 log = logging.getLogger(__name__)
 
 
-class MetaSpace(type):
+class Space(type):
     """_summary_
 
     Parameters
@@ -66,7 +66,7 @@ def space(cls: type) -> type:
 
     setattr(cls, __init__.__name__, __init__)
 
-    class NewSpace(cls, metaclass=MetaSpace):
+    class NewSpace(cls, metaclass=Space):
         """Fake class to enable overloading operators on types"""
 
     NewSpace.__name__ = cls.__name__
@@ -139,7 +139,7 @@ def __unroll_schema(cls: type) -> Dict[str, Union[dict, str]]:
     dims_str = __dimensions(cls)
 
     for key, value in dims.items():
-        if isinstance(value, MetaSpace):
+        if isinstance(value, Space):
             dims_str[key] = __unroll_schema(value)  # type: ignore
 
     return dims_str  # type: ignore
@@ -229,10 +229,10 @@ def __cartesian(cls: type, other: type) -> type:
     type
         _description_
     """
-    if not isinstance(other, MetaSpace):
+    if not isinstance(other, Space):
         raise TypeError("The left hand operand must be a Space")
 
-    if __is_empty(other):
+    if __is_empty(other) or __is_empty(cls):
         return cls
 
     new_space = __copy(cls)
@@ -308,10 +308,10 @@ def __add(cls: type, other: type) -> type:
     type
         _description_
     """
-    if not isinstance(other, MetaSpace):
+    if not isinstance(other, Space):
         raise TypeError("The left hand operand must be a Space")
 
-    if __is_empty(other):
+    if __is_empty(other) or __is_empty(cls):
         return cls
 
     other_dims = __dimensions(other, as_types=True)
