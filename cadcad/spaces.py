@@ -373,7 +373,7 @@ def __is_empty(cls: type) -> bool:
     Returns
     -------
     bool
-        _description_
+        Returns True if there are no dimensions associated with the Space class.
     """
     return not bool(__dimensions(cls, as_types=True))
 
@@ -388,12 +388,11 @@ def __generate_key(existing_key: str) -> Generator:
     Parameters
     ----------
     existing_key : str
-        _description_
 
     Yields
     ------
     Generator
-        _description_
+        Generates an existing key.
     """
     num = 1
     while True:
@@ -406,15 +405,15 @@ def __is_equivalent(cls: type, other: type) -> bool:
 
     Parameters
     ----------
-    cls : type
-        _description_
-    other : type
-        _description_
+    cls : Space
+        The first Space class.
+    other : Space
+        The second Space class.
 
     Returns
     -------
     bool
-        _description_
+        Returns True if the list of values in the first object equals the list of values in the second object.
     """
     return list(__dimensions(cls, True).values()) == list(
         __dimensions(other, True).values()
