@@ -1,284 +1,448 @@
-"""Dimensions and Spaces definitions."""
+"""Definition of Spaces"""
 
-from __future__ import annotations
-
-import json
+import logging
 from copy import deepcopy
-from typing import Iterator, Optional, Sequence, Dict, Union, Any, List
+from typing import Any, Dict, Generator, List, Union, get_type_hints
 
-from frozendict import frozendict
-from cadcad.errors import FreezingError, CopyError
+from cadcad.errors import IllFormedError, InstanceError
+
+log = logging.getLogger(__name__)
 
 
-class Space():
-    """Spaces are the most fundamental building blocks of cadCAD."""
+class Space(type):
+    """_summary_
 
-    def __init__(self,
-                 schema: Dict[str, Union[Dict[str, Any], type]],
-                 name: str,
-                 description: Optional[str] = None,
-                 frozen: bool = False):
-        """Construct a cadCAD space.
+    Parameters
+    ----------
+    type : _type_
+        _description_
+    """
 
-        Args:
-            schema (Dict[str, Union[Dict[str, Any], type]]): the type schema of the space
-            name (str): the name of the space
-            description (Optional[str]): the description of the space. Defaults to None.
-            frozen (bool, optional): wether the space is frozen or not. Defaults to False.
+    def __str__(cls: type) -> str:
+        """A space has both a name and an identifier. This methods prints the name."""
+        if not cls.dimensions():  # type: ignore
+            return f"Empty space {cls.__name__}"
 
-        Raises:
-            ValueError: if the schema of the space contains a value that is not a type
-        """
-        self.__frozen: bool = frozen
-        self.__name = name
-        self.__description = description
+        return f"Space {cls.__name__} has dimensions {cls.dimensions()}"  # type: ignore
 
-        for value in Space.flatten_schema_types(schema):
-            if not isinstance(type, type(value)):
-                raise ValueError(
-                    "The schema can only contain string to type pairs.")
+    def __mul__(cls: type, other: type) -> type:
+        return cls.cartesian(other)  # type: ignore
 
-        self.__schema: Dict[str, Union[Dict[str, Any], type]] = schema
+    def __pow__(cls: type, dimension_n: int) -> type:
+        return cls.pow(dimension_n)  # type: ignore
 
-    @property
-    def schema(self) -> frozendict:
-        """Get the schema of the space as a immutable view."""
-        return frozendict(self.__schema)
+    def __add__(cls: type, other: type) -> type:
+        return cls.add(other)  # type: ignore
 
-    @property
-    def name(self) -> str:
-        """Get the name of the space."""
-        return self.__name
 
-    @name.setter
-    def name(self, name: str) -> None:
-        """Set the name of the space."""
-        if not self.__frozen:
-            self.__name = name
-        else:
-            raise FreezingError(Space)
+# Add metrics, constraints and projections
+def space(cls: type) -> type:
+    """_summary_
 
-    @property
-    def description(self) -> Optional[str]:
-        """Get the description of the space."""
-        return self.__description
+    Parameters
+    ----------
+    cls : type
+        _description_
 
-    @description.setter
-    def description(self, description: str) -> None:
-        """Set the description of the space."""
-        if not self.__frozen:
-            self.__description = description
-        else:
-            raise FreezingError(Space)
+    Returns
+    -------
+    type
+        _description_
+    """
+    for value in cls.__annotations__.values():
+        if not isinstance(value, type):
+            raise IllFormedError
 
-    def is_frozen(self) -> bool:
-        """Get freezing status."""
-        return self.__frozen
+    cls.dimensions = classmethod(__dimensions)  # type: ignore
+    cls.cartesian = classmethod(__cartesian)  # type: ignore
+    cls.pow = classmethod(__power)  # type: ignore
+    cls.name = classmethod(__name)  # type: ignore
+    cls.copy = classmethod(__copy)  # type: ignore
+    cls.rename_dims = classmethod(__rename_dims)  # type: ignore
+    cls.is_empty = classmethod(__is_empty)  # type: ignore
+    cls.unroll_schema = classmethod(__unroll_schema)  # type: ignore
+    cls.add = classmethod(__add)  # type: ignore
+    cls.nest = classmethod(__nest)  # type: ignore
+    cls.is_equivalent = classmethod(__is_equivalent)  # type: ignore
 
-    def freeze(self) -> None:
-        """Freeze the space to deny further changes to it.
+    setattr(cls, __init__.__name__, __init__)
 
-        NOTE: This action is irreversible.
-        """
-        self.__frozen = True
+    class NewSpace(cls, metaclass=Space):
+        """Fake class to enable overloading operators on types"""
 
-    def add_dimensions(
-            self, dimensions: Dict[str, Union[Dict[str, Any], type]]) -> None:
-        """Add a dimension to an existing space's schema.
+    NewSpace.__name__ = cls.__name__
+    setattr(NewSpace, "__annotations__", cls.__annotations__)
 
-        Args:
-            dimensions (Dict[str, Union[Dict[str, Any], type]]): dimensions to add as a dictionary
-        Raises:
-            ValueError: if there is a collision of dimension names and a new name is not given
-        """
-        if self.is_frozen():
-            raise FreezingError(Space)
+    return NewSpace
 
-        for key, value in dimensions.items():
-            if key in self.__schema.keys():
-                raise ValueError(f"Collision of dimension names. \
-                Rename the key {key} of your dimensions dictionary.")
 
-            self.__schema[key] = value
+def multiply(operands: List[type]) -> type:
+    """_summary_
 
-    def drop_dimension(self, dim_name: str) -> None:
-        """Remove a dimension from a space's schema by it's name.
+    Parameters
+    ----------
+    operands : List[MetaSpace]
+        _description_
 
-        Args:
-            dim_name (str): name of dimension to be removed
-        """
-        if self.is_frozen():
-            raise FreezingError(Space)
+    Returns
+    -------
+    type
+        _description_
+    """
+    new_space = __copy(EmptySpace)
+    new_space.__name__ = "x".join([f"{cls.__name__}" for cls in operands])
+
+    new_annotation = {
+        f"{cls.__name__.lower()}_{i}": deepcopy(cls) for i, cls in enumerate(operands)
+    }
+
+    setattr(new_space, "__annotations__", new_annotation)
+
+    return new_space
+
+
+def __dimensions(cls: type, as_types: bool = False) -> Dict[str, Union[type, str]]:
+    """_summary_
+
+    Parameters
+    ----------
+    cls : type
+        _description_
+
+    Returns
+    -------
+    Dict[str, type]
+        _description_
+    """
+    hints = get_type_hints(cls)
+
+    if not as_types:
+        for key, value in hints.items():
+            hints[key] = value.__name__
+
+    return hints
+
+
+def __unroll_schema(cls: type) -> Dict[str, Union[dict, str]]:
+    """_summary_
+
+    Parameters
+    ----------
+    cls : type
+        _description_
+
+    Returns
+    -------
+    Dict[str, Union[dict, type]]
+        _description_
+    """
+    dims = __dimensions(cls, as_types=True)
+    dims_str = __dimensions(cls)
+
+    for key, value in dims.items():
+        if isinstance(value, Space):
+            dims_str[key] = __unroll_schema(value)  # type: ignore
+
+    return dims_str  # type: ignore
+
+
+def __rename_dims(cls: type, rename_dict: Dict[str, str]) -> type:
+    """_summary_
+
+    Parameters
+    ----------
+    cls : type
+        _description_
+    rename_dict : Dict[str, str]
+        _description_
+
+    Returns
+    -------
+    type
+        _description_
+    """
+    new_space = __copy(cls)
+    schema = __dimensions(new_space, as_types=True)
+
+    for old_key, new_key in rename_dict.items():
+        if new_key in schema:
+            raise KeyError(f"The dimension {new_key} already exists in {cls.__name__}")
 
         try:
-            del self.__schema[dim_name]
-        except KeyError:
-            print(f'The dimension "{dim_name}" is not present in {self.name}')
-            raise
+            schema[new_key] = schema.pop(old_key)
+        except KeyError as err:
+            log.error("Impossible to rename. Dimension %s not found.", old_key)
+            raise err
 
-    def subspace(self, subdims: Sequence[str]) -> Space:
-        """Make a mutable subspace with dimensions subdims.
+    new_space.__annotations__.clear()
 
-        If there is no dimension in subdims that are present in self, it returns an empty Space.
+    setattr(new_space, "__annotations__", schema)
 
-        Args:
-            subdims (Sequence[str]): list of names of dimensions to be present at the subspace
-        Returns:
-            Space: new space that has a subset of dimensions from self
-        """
-        cls = self.__class__
-        new_space = cls.__new__(cls)
-        internal_dict = deepcopy(self.__dict__)
-        internal_dict["_Space__frozen"] = False
+    return new_space
 
-        for dim_name in self.__schema.keys():
-            if dim_name not in subdims:
-                del internal_dict["_Space__schema"][dim_name]
 
-        new_space.__dict__.update(internal_dict)
+def __copy(cls: type) -> type:
+    """_summary_
 
-        return new_space
+    Parameters
+    ----------
+    cls : type
+        _description_
 
-    def is_empty(self) -> bool:
-        """Check if a space is empty.
+    Returns
+    -------
+    type
+        _description_
+    """
+    cls_dict = deepcopy(dict(cls.__dict__))
+    new_space = type(cls.__name__, (object,), cls_dict)
+    return space(new_space)
 
-        A space is empty if it has no dimensions (it's schema is empty).
 
-        Returns:
-            bool: whether the space is empty or not
-        """
-        return not bool(self.__schema)
+def __name(cls: type) -> str:
+    """_summary_
 
-    def is_equivalent(self, other: Any) -> bool:
-        """Check if a space is equivalent to another space.
+    Parameters
+    ----------
+    cls : type
+        _description_
 
-        Equivalence is having the same dimensions but not necessarily the other atributes.
-        Args:
-            other (Space): space to compare to
-        Returns:
-            bool: whether the spaces are equivalent or not
-        """
-        if isinstance(other, Space):
-            return self.schema == other.schema
+    Returns
+    -------
+    str
+        _description_
+    """
+    return cls.__name__
 
-        raise ValueError(f"Impossible to compare a space with a {type(other)}")
 
-    def copy(self) -> Space:
-        """Make a deep copy of a space object.
+def __cartesian(cls: type, other: type) -> type:
+    """_summary_
 
-        The resulting space will be mutable. Inherits all other atributes from the parent space.
+    Parameters
+    ----------
+    cls : type
+        _description_
+    other : type
+        _description_
 
-        Returns:
-            Space: new space
-        """
-        cls = self.__class__
-        new_space = cls.__new__(cls)
-        internal_dict = deepcopy(self.__dict__)
-        internal_dict["_Space__frozen"] = False
-        new_space.__dict__.update(internal_dict)
-        return new_space
+    Returns
+    -------
+    type
+        _description_
+    """
+    if not isinstance(other, Space):
+        raise TypeError("The left hand operand must be a Space")
 
-    def pretty_schema(self) -> str:
-        """Return pretty string repreentation of the schema."""
-        return json.dumps(self.__schema, indent=4, default=str)
+    if __is_empty(other):
+        return cls
+    elif __is_empty(cls):
+        return other
 
-    def __copy__(self) -> None:
-        """Forbidden copy method."""
-        raise CopyError(Space)
+    new_space = __copy(cls)
+    new_space.__annotations__.clear()
 
-    def __deepcopy__(self, memo: dict) -> None:
-        """Forbidden copy method."""
-        raise CopyError(Space)
+    if cls.__name__ == other.__name__:
+        new_space.__annotations__ = {
+            f"{cls.__name__.lower()}_0": deepcopy(cls),
+            f"{other.__name__.lower()}_1": other,
+        }
+    else:
+        new_space.__annotations__ = {
+            cls.__name__.lower(): deepcopy(cls),
+            other.__name__.lower(): other,
+        }
 
-    def __eq__(self, other: object) -> bool:
-        """Check if a space is equal to another.
+    new_space.__name__ = f"{cls.__name__}*{other.__name__}"
 
-        A space is equal to another if their dimensions and name are equal.
-        Even if the objects are equal, they may ocuppy different positions in memory.
-        Args:
-            other (Space): another space to compare
-        Returns:
-            bool: whether the spaces are equal or not
-        """
-        if isinstance(other, Space):
-            return self.schema == other.schema and self.name == other.name \
-                and self.description == other.description
+    return new_space
 
-        raise ValueError(f"Impossible to compare a space with a {type(other)}")
 
-    def __str__(self) -> str:
-        """Return a string representation of a space."""
-        newline = '\n'
-        str_result = ''
-        dims = Space.flatten_schema_keys(self.__schema)
+def __power(cls: type, dimension_n: int) -> type:
+    """_summary_
+    NOTE: The power of a space is not the repeating cartesian product of a space by itself!
 
-        if self.is_frozen():
-            str_result += "Frozen space "
+    Parameters
+    ----------
+    cls : type
+        _description_
+    dimension_n : int
+        _description_
+
+    Returns
+    -------
+    type
+        _description_
+
+    Raises
+    ------
+    TypeError
+        _description_
+    """
+    if isinstance(dimension_n, int) and dimension_n == 0:
+        return EmptySpace
+
+    if isinstance(dimension_n, int) and dimension_n == 1:
+        return cls
+
+    if isinstance(dimension_n, int) and dimension_n > 1:
+        new_annotation = {
+            f"{cls.__name__.lower()}_{i}": deepcopy(cls) for i in range(dimension_n)
+        }
+        new_space = type(f"{dimension_n}-{cls.__name__}", (object,), dict(cls.__dict__))
+        setattr(new_space, "__annotations__", new_annotation)
+
+        return space(new_space)
+
+    raise TypeError("The left hand operand must be a positive integer")
+
+
+def __add(cls: type, other: type) -> type:
+    """_summary_
+
+    Parameters
+    ----------
+    cls : type
+        _description_
+    other : type
+        _description_
+
+    Returns
+    -------
+    type
+        _description_
+    """
+    if not isinstance(other, Space):
+        raise TypeError("The left hand operand must be a Space")
+
+    if __is_empty(other):
+        return cls
+    elif __is_empty(cls):
+        return other
+
+    other_dims = __dimensions(other, as_types=True)
+
+    new_space = __copy(cls)
+    new_space.__name__ = f"{cls.__name__}+{other.__name__}"
+
+    for dim_name, dim_type in other_dims.items():
+        if dim_name in new_space.__annotations__:
+            for new_key in __generate_key(dim_name):
+                if new_key not in new_space.__annotations__:
+                    new_space.__annotations__[new_key] = dim_type
+                    break
         else:
-            str_result += "Unfrozen space "
+            new_space.__annotations__[dim_name] = dim_type
 
-        str_result += f"{self.name} "
-        str_result += f"has dimensions {dims} "
+    return space(new_space)
 
-        if self.description:
-            str_result += f"and description:{newline}{self.description}{newline}"
 
-        return str_result
+def __nest(cls: type, name_change: bool = True) -> type:
+    """_summary_
 
-    def __mul__(self: Space, other: Any) -> Space:
-        """Do a cartesian product of self and other."""
-        if isinstance(other, Space):
-            new_name = f"{self.name} x {other.name}"
+    Parameters
+    ----------
+    cls : type
+        _description_
+    name_change : bool, optional
+        _description_, by default True
 
-            new_space = Space({}, new_name)
+    Returns
+    -------
+    type
+        _description_
+    """
+    new_space = __copy(cls)
 
-            new_space.add_dimensions(self.__schema)
-            new_space.add_dimensions(other.schema)
+    if name_change:
+        new_space.__name__ = f"nested-{cls.__name__}"
 
-            return new_space
+    new_space.__annotations__.clear()
+    new_space.__annotations__[cls.__name__] = deepcopy(cls)
 
-        raise ValueError(f"Impossible to multiply a space to a {type(other)}")
+    return space(new_space)
 
-    def __getitem__(self, key: str) -> Union[Dict[str, Any], type]:
-        """Get dimension on space through indexing."""
-        return self.__schema[key]
 
-    @staticmethod
-    def flatten_schema_types(
-            dimensions: Dict[str, Union[Dict[str, Any],
-                                        type]]) -> Iterator[type]:
-        """Yield the values of the nested dictionary that is the dimensions of a space.
+def __is_empty(cls: type) -> bool:
+    """_summary_
 
-        Args:
-            dimensions (Dict[str, Union[Dict[str, Any], type]]): the dimensions of the space
+    Parameters
+    ----------
+    cls : type
+        _description_
 
-        Yields:
-            Iterator[type]: the value inside the dictionary
-        """
-        for value in dimensions.values():
-            if isinstance(value, dict):
-                yield from Space.flatten_schema_types(value)
-            else:
-                yield value
+    Returns
+    -------
+    bool
+        _description_
+    """
+    return not bool(__dimensions(cls, as_types=True))
 
-    @staticmethod
-    def flatten_schema_keys(
-            dimensions: Dict[str, Union[Dict[str, Any], type]]) -> List[str]:
-        """Yield the values of the nested dictionary that is the dimensions of a space.
 
-        Args:
-            dimensions (Dict[str, Union[Dict[str, Any], type]]): the dimensions of the space
+def __init__(self: Any, *args: Any, **kwargs: Any) -> None:  # noqa: N807
+    raise InstanceError
 
-        Yields:
-            List[str]: list of dimension names from the dimensions dictionary
-        """
-        schema_keys = []
 
-        for key, value in dimensions.items():
-            if isinstance(value, dict):
-                schema_keys.append(key)
-                schema_keys += Space.flatten_schema_keys(value)
-            else:
-                schema_keys.append(key)
+def __generate_key(existing_key: str) -> Generator:
+    """_summary_
 
-        return schema_keys
+    Parameters
+    ----------
+    existing_key : str
+        _description_
+
+    Yields
+    ------
+    Generator
+        _description_
+    """
+    num = 1
+    while True:
+        yield f"{existing_key}_{num}"
+        num += 1
+
+
+def __is_equivalent(cls: type, other: type) -> bool:
+    """_summary_
+
+    Parameters
+    ----------
+    cls : type
+        _description_
+    other : type
+        _description_
+
+    Returns
+    -------
+    bool
+        _description_
+    """
+    return list(__dimensions(cls, True).values()) == list(
+        __dimensions(other, True).values()
+    )
+
+
+@space
+class EmptySpace:
+    """A space with no dimensions.
+    It is the multiplicative identity in the algebra of spaces."""
+
+
+@space
+class Real:
+    """The one dimensional space of real numbers."""
+
+    real: float
+
+
+@space
+class Integer:
+    """The one dimensional space of integer numbers."""
+
+    integer: int
+
+
+@space
+class Bit:
+    """The one dimensional space of bits."""
+
+    bit: bool
