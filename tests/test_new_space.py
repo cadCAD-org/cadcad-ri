@@ -5,7 +5,7 @@ This should run as part of the CI/CD pipeline.
 
 import pytest
 
-from cadcad.builtins import EmptySpace, Integer, Real
+from cadcad.spaces import EmptySpace, Integer, Real
 
 # from cadcad.errors import InstanceError
 from cadcad.spaces import space
