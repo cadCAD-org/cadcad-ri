@@ -26,6 +26,7 @@ pep8-naming = "*"
 pydocstyle = "*"
 pylint = "*"
 numpy = ">=1.22"
+autopep8 = "^1.6.0"
 
 [tool.yapf]
 based_on_style = "pep8"
