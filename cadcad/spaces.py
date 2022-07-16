@@ -15,7 +15,7 @@ class Space(type):
     """
     A Space is a container of types, with the property that it contains
     composition operators, allowing one Space to be composed of Multiple Spaces
-    as a input
+    as an input.
     """
 
     def __str__(cls: type) -> str:
@@ -119,7 +119,7 @@ def multiply(operands: List[type]) -> type:
 
 def __dimensions(cls: type, as_types: bool = False) -> Dict[str, Union[type, str]]:
     """
-    Return an dictionary of the dimensions of a Space type where keys are names
+    Return a dictionary of the dimensions of a Space type where keys are names
     and values are types.
 
     Parameters
@@ -145,7 +145,7 @@ def __dimensions(cls: type, as_types: bool = False) -> Dict[str, Union[type, str
 
 def __unroll_schema(cls: type) -> Dict[str, Union[dict, str]]:
     """
-    Extract an Dictionary schema of the Space dimensions. It is recursive if there are dimensions which are also Space.
+    Extract a Dictionary schema of the Space dimensions. It is recursive if there are dimensions which are also Space.
 
     Parameters
     ----------
@@ -155,7 +155,7 @@ def __unroll_schema(cls: type) -> Dict[str, Union[dict, str]]:
     Returns
     -------
     Dict[str, Union[dict, type]]
-        An dict schema of the dimensions. Nested if there are inner Spaces.
+        A dict schema of the dimensions. Nested if there are inner Spaces.
     """
     dims = __dimensions(cls, as_types=True)
     dims_str = __dimensions(cls)
