@@ -4,6 +4,7 @@ import numpy as np
 from math import sqrt
 from random import choice
 
+from typing import Generator
 from dataclasses import dataclass
 
 UP = np.array([0, 1])
@@ -130,6 +131,23 @@ def hotel_decisions(world_state: WorldState,
     return new_hotels
 
 
+@dataclass
+class HotellingLawModel():
+    hotels: list[Hotels]
+    consumers: ConsumerState
+    world_params: WorldParams
 
-consumer_state = Space({'consumers_state': ConsumerState})
-hotels_state = Space({'hotels_state': Hotels})
+    @property
+    def world_state(self) -> WorldState:
+        return WorldState(self.hotels, self.consumers)
+
+
+    def step(self) -> None:
+        self.consumers = realize_consumption(self.hotels, self.world_params)
+        self.hotels = hotel_decisions(self.world_state, self.world_params)
+
+    def run(self, n_steps: int) -> Generator[WorldState, None, None]:
+        yield self.world_state
+        for _ in range(n_steps):
+            self.step()
+            yield self.world_state
