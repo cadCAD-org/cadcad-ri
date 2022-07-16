@@ -1,4 +1,6 @@
-"""Definition of Spaces"""
+"""
+Definition of Spaces
+"""
 
 import logging
 from copy import deepcopy
@@ -10,20 +12,20 @@ log = logging.getLogger(__name__)
 
 
 class Space(type):
-    """_summary_
-
-    Parameters
-    ----------
-    type : _type_
-        _description_
+    """
+    A Space is a container of types, with the property that it contains
+    composition operators, allowing one Space to be composed of Multiple Spaces
+    as a input
     """
 
     def __str__(cls: type) -> str:
-        """A space has both a name and an identifier. This methods prints the name."""
+        """
+        A space has both a name and an identifier. This methods prints the name.
+        """
         if not cls.dimensions():  # type: ignore
             return f"Empty space {cls.__name__}"
-
-        return f"Space {cls.__name__} has dimensions {cls.dimensions()}"  # type: ignore
+        else:
+            return f"Space {cls.__name__} has dimensions {cls.dimensions()}"  # type: ignore
 
     def __mul__(cls: type, other: type) -> type:
         return cls.cartesian(other)  # type: ignore
@@ -37,22 +39,31 @@ class Space(type):
 
 # Add metrics, constraints and projections
 def space(cls: type) -> type:
-    """_summary_
+    """
+    Decorator for generating a new Space type from a class definition that follows the Space semantics - i.e. dimensions are type-annotated member variables with undefined values.
 
     Parameters
     ----------
     cls : type
-        _description_
+        Space definition as a class, on which dimensions as type-annotated member variables with undefined values.
+
 
     Returns
     -------
     type
-        _description_
+        a Space type.
     """
+
+    # Fix a bug on some environments where the annotations field does not exists.
+    if not hasattr(cls, '__annotations__'):
+        setattr(cls, '__annotations__', {})
+
+
     for value in cls.__annotations__.values():
         if not isinstance(value, type):
             raise IllFormedError
 
+    # Instance methods for the Space type.
     cls.dimensions = classmethod(__dimensions)  # type: ignore
     cls.cartesian = classmethod(__cartesian)  # type: ignore
     cls.pow = classmethod(__power)  # type: ignore
@@ -68,7 +79,9 @@ def space(cls: type) -> type:
     setattr(cls, __init__.__name__, __init__)
 
     class NewSpace(cls, metaclass=Space):
-        """Fake class to enable overloading operators on types"""
+        """
+        Fake class to enable overloading operators on types
+        """
 
     NewSpace.__name__ = cls.__name__
     setattr(NewSpace, "__annotations__", cls.__annotations__)
@@ -77,23 +90,26 @@ def space(cls: type) -> type:
 
 
 def multiply(operands: List[type]) -> type:
-    """_summary_
+    """
+    Compose multiple spaces into a single space.
 
     Parameters
     ----------
-    operands : List[MetaSpace]
-        _description_
+    operands : List[Space]
+        Spaces to be concatenated together.
 
     Returns
     -------
     type
-        _description_
+        A new space on which dimensions are the union of the input spaces. The names follows an ordinal order.
     """
     new_space = __copy(EmptySpace)
     new_space.__name__ = "x".join([f"{cls.__name__}" for cls in operands])
 
     new_annotation = {
-        f"{cls.__name__.lower()}_{i}": deepcopy(cls) for i, cls in enumerate(operands)
+        f"{cls.__name__.lower()}_{i}": deepcopy(cls) 
+        for i, cls
+         in enumerate(operands)
     }
 
     setattr(new_space, "__annotations__", new_annotation)
@@ -102,39 +118,44 @@ def multiply(operands: List[type]) -> type:
 
 
 def __dimensions(cls: type, as_types: bool = False) -> Dict[str, Union[type, str]]:
-    """_summary_
+    """
+    Return an dictionary of the dimensions of a Space type where keys are names
+    and values are types.
 
     Parameters
     ----------
     cls : type
-        _description_
+        Space type to retrieve dimensions.
 
     Returns
     -------
     Dict[str, type]
-        _description_
+        Keys are names of dimensions and values are types.
     """
     hints = get_type_hints(cls)
 
+    # If there are class type hints, then set `hints` to be the an map
+    # key is the name and value is the type.
     if not as_types:
-        for key, value in hints.items():
-            hints[key] = value.__name__
+        for variable_name, variable_type in hints.items():
+            hints[variable_name] = variable_type.__name__
 
     return hints
 
 
 def __unroll_schema(cls: type) -> Dict[str, Union[dict, str]]:
-    """_summary_
+    """
+    Extract an Dictionary schema of the Space dimensions. It is recursive if there are dimensions which are also Space.
 
     Parameters
     ----------
     cls : type
-        _description_
+        Space to be unrolled.
 
     Returns
     -------
     Dict[str, Union[dict, type]]
-        _description_
+        An dict schema of the dimensions. Nested if there are inner Spaces.
     """
     dims = __dimensions(cls, as_types=True)
     dims_str = __dimensions(cls)
@@ -147,19 +168,18 @@ def __unroll_schema(cls: type) -> Dict[str, Union[dict, str]]:
 
 
 def __rename_dims(cls: type, rename_dict: Dict[str, str]) -> type:
-    """_summary_
-
+    """
     Parameters
     ----------
     cls : type
-        _description_
+        Space on which to rename dimensions
     rename_dict : Dict[str, str]
-        _description_
+        Map on which keys are old names and values are new names.
 
     Returns
     -------
     type
-        _description_
+        Space with renamed dimensions.
     """
     new_space = __copy(cls)
     schema = __dimensions(new_space, as_types=True)
@@ -182,17 +202,18 @@ def __rename_dims(cls: type, rename_dict: Dict[str, str]) -> type:
 
 
 def __copy(cls: type) -> type:
-    """_summary_
+    """
+    Perform an deepcopy over an given space.
 
     Parameters
     ----------
     cls : type
-        _description_
+        Space to be copied.
 
     Returns
     -------
     type
-        _description_
+        New space instance.
     """
     cls_dict = deepcopy(dict(cls.__dict__))
     new_space = type(cls.__name__, (object,), cls_dict)
@@ -200,35 +221,40 @@ def __copy(cls: type) -> type:
 
 
 def __name(cls: type) -> str:
-    """_summary_
+    """
+    Retrieve the name of a Space type.
 
     Parameters
     ----------
     cls : type
-        _description_
+        Space type.
 
     Returns
     -------
     str
-        _description_
+        Name of the Space type.
     """
     return cls.__name__
 
 
 def __cartesian(cls: type, other: type) -> type:
-    """_summary_
+    """
+    Concatenate two spaces into a single space.
+
+    `Space_1 * Space_2 = Space_3`, where `Space_3` has two dimensions of values
+    `Space_1` and `Space_2`.
 
     Parameters
     ----------
     cls : type
-        _description_
+        Space 1 to be concatenated.
     other : type
-        _description_
+        Space 2 to be cocnatenated.
 
     Returns
     -------
     type
-        _description_
+        An concatenated space, on which the dimensions are the input spaces.
     """
     if not isinstance(other, Space):
         raise TypeError("The left hand operand must be a Space")
@@ -258,25 +284,28 @@ def __cartesian(cls: type, other: type) -> type:
 
 
 def __power(cls: type, dimension_n: int) -> type:
-    """_summary_
-    NOTE: The power of a space is not the repeating cartesian product of a space by itself!
+    """
+    Repeated merge of a space against itself, n times. Eg. `Space_1 ** 4 = Space_1 + Space_1 + Space_1 + Space_1`
+
+
+    NOTE: The power of a space is not the repeating cartesian product of a space by itself, but rather it is the repeating merge operation.
 
     Parameters
     ----------
     cls : type
-        _description_
+        Space on which to apply the repeated merge operation.
     dimension_n : int
-        _description_
+        How many times to merge the space against itself.
 
     Returns
     -------
     type
-        _description_
+        `Space^n`
 
     Raises
     ------
     TypeError
-        _description_
+        Triggered if `dimensions_n` is not an integer and is below 0.
     """
     if isinstance(dimension_n, int) and dimension_n == 0:
         return EmptySpace
@@ -292,24 +321,28 @@ def __power(cls: type, dimension_n: int) -> type:
         setattr(new_space, "__annotations__", new_annotation)
 
         return space(new_space)
-
+    
     raise TypeError("The left hand operand must be a positive integer")
 
 
 def __add(cls: type, other: type) -> type:
-    """_summary_
+    """
+    Merge two Spaces.
+
+    Eg. `Space_1 + Space_2 = Space_3`, on which the dimensions of `Space_3` is
+    the union of the dimensions of `Space_1` and `Space_2`.
 
     Parameters
     ----------
     cls : type
-        _description_
+        Space 1 to be merged.
     other : type
-        _description_
+        Space 2 to be merged.
 
     Returns
     -------
     type
-        _description_
+        An merged space, on which the dimensions are the union of the dimensions of the input spaces.
     """
     if not isinstance(other, Space):
         raise TypeError("The left hand operand must be a Space")
@@ -337,19 +370,22 @@ def __add(cls: type, other: type) -> type:
 
 
 def __nest(cls: type, name_change: bool = True) -> type:
-    """_summary_
+    """
+    Rolls the space dimensions into a new space, which then substitutes the input space dimensions.
+
+    Eg. on `Space_2 = Space_1.nest()`, `Space_2` has an single dimension with the name and value being `Space_1`.
 
     Parameters
     ----------
     cls : type
-        _description_
+        Space to nest.
     name_change : bool, optional
-        _description_, by default True
+        If True, the name of the new root space will include an `nested-` prefix.
 
     Returns
     -------
     type
-        _description_
+        Nested space.
     """
     new_space = __copy(cls)
 
@@ -363,17 +399,18 @@ def __nest(cls: type, name_change: bool = True) -> type:
 
 
 def __is_empty(cls: type) -> bool:
-    """_summary_
+    """
+    Checks if an Space has any defined dimensions.
 
     Parameters
     ----------
     cls : type
-        _description_
+        Space to check the dimensions against.
 
     Returns
     -------
     bool
-        Returns True if there are no dimensions associated with the Space class.
+        True if there are no defined dimensionse, False otherwise.
     """
     return not bool(__dimensions(cls, as_types=True))
 
@@ -382,17 +419,19 @@ def __init__(self: Any, *args: Any, **kwargs: Any) -> None:  # noqa: N807
     raise InstanceError
 
 
-def __generate_key(existing_key: str) -> Generator:
-    """_summary_
+def __generate_key(existing_key: str) -> Generator[str, None, None]:
+    """
+    Ordinal number generator for a dimension.
 
     Parameters
     ----------
     existing_key : str
+        Dimension name.
 
     Yields
     ------
-    Generator
-        Generates an existing key.
+    Generator for the dimension name.
+        
     """
     num = 1
     while True:
@@ -401,19 +440,18 @@ def __generate_key(existing_key: str) -> Generator:
 
 
 def __is_equivalent(cls: type, other: type) -> bool:
-    """_summary_
+    """
+    Check if two Space types are equivalent in terms of their dimension types.
 
     Parameters
     ----------
-    cls : Space
-        The first Space class.
-    other : Space
-        The second Space class.
+    cls : type
+    other : type
 
     Returns
     -------
     bool
-        Returns True if the list of values in the first object equals the list of values in the second object.
+        True if the Space Dimensions are all equal, False otherwise.
     """
     return list(__dimensions(cls, True).values()) == list(
         __dimensions(other, True).values()
@@ -422,26 +460,32 @@ def __is_equivalent(cls: type, other: type) -> bool:
 
 @space
 class EmptySpace:
-    """A space with no dimensions.
-    It is the multiplicative identity in the algebra of spaces."""
+    """
+    A space with no dimensions.
+    It is the multiplicative identity in the algebra of spaces.
+    """
 
 
 @space
 class Real:
-    """The one dimensional space of real numbers."""
-
+    """
+    The one dimensional space of real numbers.
+    """
     real: float
 
 
 @space
 class Integer:
-    """The one dimensional space of integer numbers."""
-
+    """
+    The one dimensional space of integer numbers.
+    """
     integer: int
 
 
 @space
 class Bit:
-    """The one dimensional space of bits."""
+    """
+    The one dimensional space of bits.
+    """
 
     bit: bool
