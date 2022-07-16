@@ -53,6 +53,12 @@ def space(cls: type) -> type:
     type
         a Space type.
     """
+
+    # Fix a bug on some environments where the annotations field does not exists.
+    if not hasattr(cls, '__annotations__'):
+        setattr(cls, '__annotations__', {})
+
+
     for value in cls.__annotations__.values():
         if not isinstance(value, type):
             raise IllFormedError
