@@ -27,6 +27,15 @@ class Space(type):
         else:
             return f"Space {cls.__name__} has dimensions {cls.dimensions()}"  # type: ignore
 
+    def __repr__(cls) -> str:
+        """
+        A space has both a name and an identifier. This methods prints the name.
+        """
+        if not cls.dimensions():  # type: ignore
+            return f"Empty space {cls.__name__}"
+        else:
+            return f"Space {cls.__name__} has dimensions {cls.dimensions()}"  # type: ignore
+
     def __mul__(cls: type, other: type) -> type:
         return cls.cartesian(other)  # type: ignore
 

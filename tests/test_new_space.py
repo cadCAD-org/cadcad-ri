@@ -13,3 +13,6 @@ from cadcad.spaces import space
 
 def test_space_creation() -> None:
     """Test creation of spaces."""
+
+
+
