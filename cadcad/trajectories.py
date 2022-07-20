@@ -2,13 +2,14 @@
 
 import json
 from typing import Any, Dict
+
 from frozendict import frozendict
 
-from cadcad.old_spaces import Space
 from cadcad.errors import SchemaError
+from cadcad.old_spaces import Space
 
 
-class Point():
+class Point:
     """
     Points in cadCAD.
 
@@ -34,17 +35,19 @@ class Point():
         internal_data = {}
 
         for key, value in data.items():
-            if key in space.schema.keys() and isinstance(
-                    space.schema[key], type) and isinstance(
-                        value, space.schema[key]):
+            if (
+                key in space.schema.keys()
+                and isinstance(space.schema[key], type)
+                and isinstance(value, space.schema[key])
+            ):
                 internal_data[key] = value
             else:
                 expected_schema = [
-                    f"{name} -> {dim}"
-                    for name, dim in space.schema.items()
+                    f"{name} -> {dim}" for name, dim in space.schema.items()
                 ]
-                raise SchemaError(space.name, expected_schema,
-                                  f"{key} -> {type(value)}")
+                raise SchemaError(
+                    space.name, expected_schema, f"{key} -> {type(value)}"
+                )
 
         self.__data: Dict[str, Any] = frozendict(internal_data)
 
@@ -64,6 +67,8 @@ class Point():
 
     def __str__(self) -> str:
         """Return a string representation of a point."""
-        newline = '\n'
+        newline = "\n"
         data = json.dumps(dict(self.data), indent=4, default=str)
-        return f"Frozen point in space {self.space.name} has data{newline}{data}{newline}"
+        return (
+            f"Frozen point in space {self.space.name} has data{newline}{data}{newline}"
+        )
