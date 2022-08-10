@@ -130,3 +130,4 @@ cython_debug/
 .vscode
 
 scratchpad.ipynb
+cadcad/scratch.py

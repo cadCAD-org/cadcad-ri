@@ -1,15 +1,14 @@
 """Points and Trajectories definitions."""
 
 import json
-from typing import Any, Dict
+from typing import Any, Dict, Generic, TypeVar
 
-from frozendict import frozendict
+from cadcad.spaces import Space
 
-from cadcad.errors import SchemaError
-from cadcad.old_spaces import Space
+TSpace_co = TypeVar("TSpace_co", bound=Space, covariant=True)
 
 
-class Point:
+class Point(Generic[TSpace_co]):
     """
     Points in cadCAD.
 
@@ -21,7 +20,9 @@ class Point:
         dictionary of dimension names to data that obeys the dimension type
     """
 
-    def __init__(self, space: Space, data: Dict[str, Any]):
+    def __init__(
+        self, space: TSpace_co, data: Dict[str, Any], check_types: bool = True
+    ):
         """Build a space based on a tuple of dimensions.
 
         Args:
@@ -30,26 +31,25 @@ class Point:
         Raises:
             SchemaError: if there is a mismatch between the data and space's schema
         """
-        self.__space: Space = space
+        if isinstance(space, Space):
+            self.__space = space
+        else:
+            raise TypeError("Points must be specialized by Spaces")
 
-        internal_data = {}
+        dims = space.dimensions(as_types=True)  # type: ignore
 
-        for key, value in data.items():
-            if (
-                key in space.schema.keys()
-                and isinstance(space.schema[key], type)
-                and isinstance(value, space.schema[key])
-            ):
-                internal_data[key] = value
+        if not isinstance(data, Dict):
+            raise TypeError("Point's data must be a dictionary")
+
+        if check_types:
+            if check_schema(dims, data):
+                self.__data: Dict[str, Any] = data
             else:
-                expected_schema = [
-                    f"{name} -> {dim}" for name, dim in space.schema.items()
-                ]
-                raise SchemaError(
-                    space.name, expected_schema, f"{key} -> {type(value)}"
+                raise ValueError(
+                    "Schema mismatch between the Point's Space and the data given."
                 )
-
-        self.__data: Dict[str, Any] = frozendict(internal_data)
+        else:
+            self.__data = data
 
     @property
     def space(self) -> Space:
@@ -69,6 +69,38 @@ class Point:
         """Return a string representation of a point."""
         newline = "\n"
         data = json.dumps(dict(self.data), indent=4, default=str)
-        return (
-            f"Frozen point in space {self.space.name} has data{newline}{data}{newline}"
-        )
+        return f"Point in space {self.space.name()} has data{newline}{data}{newline}"  # type: ignore
+
+
+def check_schema(dim_dict: Dict[str, type], data_dict: Dict[str, Any]) -> bool:
+    """_summary_
+
+    Parameters
+    ----------
+    dim_dict : Dict[str, type]
+        _description_
+    data_dict : Dict[str, Any]
+        _description_
+
+    Returns
+    -------
+    bool
+        _description_
+    """
+    confirmations = 0
+
+    for (dim_name, dim_type), (data_name, data_value) in zip(
+        sorted(dim_dict.items()), sorted(data_dict.items()), strict=True
+    ):
+        if isinstance(dim_type, Space):
+            inner_dims = dim_type.dimensions(as_types=True)  # type: ignore
+            inner_data = data_dict[dim_name]
+            if check_schema(inner_dims, inner_data):
+                confirmations += 1
+        elif dim_name == data_name and isinstance(data_value, dim_type):
+            confirmations += 1
+
+    if confirmations == len(data_dict):
+        return True
+
+    return False
