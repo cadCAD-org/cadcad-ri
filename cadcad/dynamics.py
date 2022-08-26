@@ -6,8 +6,8 @@ from copy import deepcopy
 from dataclasses import dataclass
 from typing import Any, Callable, Optional, Sequence, Union
 
+from cadcad.points import Point
 from cadcad.spaces import Space
-from cadcad.trajectories import Point
 
 
 def block(

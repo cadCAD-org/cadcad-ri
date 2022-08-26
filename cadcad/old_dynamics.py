@@ -9,7 +9,7 @@ from typing import Callable, Optional, Union
 
 from cadcad.errors import CopyError, FreezingError
 from cadcad.old_spaces import Space
-from cadcad.trajectories import Point
+from cadcad.points import Point
 
 
 @dataclass

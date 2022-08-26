@@ -1,7 +1,8 @@
 """Points and Trajectories definitions."""
 
 import json
-from typing import Any, Dict, Generic, TypeVar
+from inspect import getmro
+from typing import Any, Collection, Dict, Generic, TypeVar, get_args
 
 from cadcad.spaces import Space
 
@@ -45,8 +46,12 @@ class Point(Generic[TSpace_co]):
             if check_schema(dims, data):
                 self.__data: Dict[str, Any] = data
             else:
+                received_type = [
+                    f"{name} -> {type(value)}" for name, value in data.items()
+                ]
                 raise ValueError(
-                    "Schema mismatch between the Point's Space and the data given."
+                    "Schema mismatch between the Point's Space and the data given. "
+                    + f"Expected {dims}, but received {received_type}"
                 )
         else:
             self.__data = data
@@ -92,12 +97,32 @@ def check_schema(dim_dict: Dict[str, type], data_dict: Dict[str, Any]) -> bool:
     for (dim_name, dim_type), (data_name, data_value) in zip(
         sorted(dim_dict.items()), sorted(data_dict.items()), strict=True
     ):
-        if isinstance(dim_type, Space):
+        if isinstance(dim_type, type):
+            specialized_type = get_args(dim_type)
+            dim_mro = getmro(dim_type)
+        else:
+            raise TypeError("The dimension must be a type.")
+
+        if isinstance(dim_type, Space) and dim_name == data_name:
             inner_dims = dim_type.dimensions(as_types=True)  # type: ignore
-            inner_data = data_dict[dim_name]
-            if check_schema(inner_dims, inner_data):
+            if check_schema(inner_dims, data_value):
                 confirmations += 1
-        elif dim_name == data_name and isinstance(data_value, dim_type):
+        elif (
+            dim_name == data_name
+            and specialized_type
+            and issubclass(dim_mro[0], Collection)
+        ):
+            if isinstance(specialized_type[0], Space):
+                inner_dims = specialized_type[0].dimensions(as_types=True)  # type: ignore
+                if check_schema(inner_dims, data_value[0]):
+                    confirmations += 1
+            elif isinstance(data_value[0], specialized_type[0]):
+                confirmations += 1
+        elif (
+            dim_name == data_name
+            and not specialized_type
+            and isinstance(data_value, dim_type)
+        ):
             confirmations += 1
 
     if confirmations == len(data_dict):
