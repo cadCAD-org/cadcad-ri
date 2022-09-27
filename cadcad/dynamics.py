@@ -4,19 +4,16 @@ from __future__ import annotations
 
 from copy import deepcopy
 from dataclasses import dataclass
-from typing import Any, Callable, Optional, Sequence, Union
+from typing import Any, Callable, Collection, Optional, Union, get_args
 
-from cadcad.points import Point
+from cadcad.points import Point, TSpace_co
 from cadcad.spaces import Space
 
 
 def block(
-    func: Union[
-        Callable[
-            [Union[Point, Sequence[Point]], Optional[Space]],
-            Union[Point, Sequence[Point]],
-        ],
-        Callable[[Union[Point, Sequence[Point]]], Union[Point, Sequence[Point]]],
+    func: Callable[
+        [Union[Point[TSpace_co], Collection[Point[TSpace_co]]]],
+        Union[Point[TSpace_co], Collection[Point[TSpace_co]]],
     ],
     param_space: Optional[Space] = None,
 ) -> Block:
@@ -32,21 +29,40 @@ def block(
     Callable
         _description_
     """
-    if isinstance(func.__annotations__["return"], Space):
-        codomain = func.__annotations__["return"]
+    return_type = func.__annotations__["return"]
+    specialized_type = get_args(return_type)[0]
+
+    if issubclass(return_type.__origin__, Point) and isinstance(
+        specialized_type, Space
+    ):
+        codomain: Union[Point[Space], Collection[Point[Space]]] = return_type
+    elif (
+        isinstance(return_type, Collection)
+        and isinstance(specialized_type, Point)
+        and isinstance(get_args(specialized_type)[0], Space)
+    ):
+        codomain = return_type
     else:
-        codomain = None
-
-    del func.__annotations__["return"]
-
-    if isinstance(func.__annotations__["return"], Space):
-        domain = func.__annotations__
-    else:
-        domain = None
-
-    if not domain or not codomain:
         raise TypeError(
-            "The block function must have spaces as the type of arguments and return"
+            "The return of a block function must be a point of a space or a collection of them."
+        )
+
+    domain_type = func.__annotations__["domain"]
+    specialized_domain_type = get_args(domain_type)[0]
+
+    if issubclass(domain_type.__origin__, Point) and isinstance(
+        specialized_domain_type, Space
+    ):
+        domain = domain_type
+    elif (
+        isinstance(domain_type, Collection)
+        and isinstance(specialized_domain_type, Point)
+        and isinstance(get_args(specialized_domain_type)[0], Space)
+    ):
+        domain = domain_type  # type: ignore
+    else:
+        raise TypeError(
+            "The domain of a block function must be a point of a space or a collection of them."
         )
 
     return Block(func, domain, codomain, param_space)
@@ -68,39 +84,30 @@ class Block:
         parameter space of the block (optional)
     """
 
-    __function: Union[
-        Callable[
-            [Union[Point, Sequence[Point]], Optional[Space]],
-            Union[Point, Sequence[Point]],
-        ],
-        Callable[[Union[Point, Sequence[Point]]], Union[Point, Sequence[Point]]],
+    __function: Callable[
+        [Union[Point, Collection[Point]]],
+        Union[Point, Collection[Point]],
     ]
-    __domains: Union[Space, Sequence[Space]]
-    __codomains: Union[Space, Sequence[Space]]
+    __domain: Union[Point, Collection[Point]]
+    __codomain: Union[Point, Collection[Point]]
     __param_space: Optional[Space] = None
 
     @property
     def function(
         self,
-    ) -> Union[
-        Callable[
-            [Union[Point, Sequence[Point]], Optional[Space]],
-            Union[Point, Sequence[Point]],
-        ],
-        Callable[[Union[Point, Sequence[Point]]], Union[Point, Sequence[Point]]],
-    ]:
+    ) -> Callable[[Union[Point, Collection[Point]]], Union[Point, Collection[Point]]]:
         """Get the function of the block."""
         return self.__function
 
     @property
-    def domains(self) -> Union[Space, Sequence[Space]]:
+    def domain(self) -> Union[Point, Collection[Point]]:
         """Get the domains of the block."""
-        return self.__domains
+        return self.__domain
 
     @property
-    def codomains(self) -> Union[Space, Sequence[Space]]:
+    def codomains(self) -> Union[Point, Collection[Point]]:
         """Get the codomains of the block."""
-        return self.__codomains
+        return self.__codomain
 
     @property
     def param_space(self) -> Optional[Space]:
@@ -139,7 +146,7 @@ class Block:
         newline = "\n"
 
         str_result = f"Block {self.function.__name__} "
-        str_result += f"has domains: {newline}-> {self.domains},{newline}"
+        str_result += f"has domains: {newline}-> {self.domain},{newline}"
         str_result += f"has codomains: {newline}-> {self.codomains},{newline}"
 
         if self.param_space:
@@ -147,5 +154,5 @@ class Block:
 
         return str_result
 
-    def __call__(self, *args: Any, **kwds: Any) -> Any:
-        print("call")
+    def __call__(self, *args: Any, **kwargs: Any) -> Any:
+        return self.__function(*args, **kwargs)
