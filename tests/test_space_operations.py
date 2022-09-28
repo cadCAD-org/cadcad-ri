@@ -43,3 +43,7 @@ def test_repeated_merge_product():
         assert 'space_1' in dim_name
         assert dim_type == Space_1.__name__
 
+
+def test_copy():
+    Space_1_Copy = Space_1.copy()
+    assert Space_1_Copy.is_equivalent(Space_1) and (Space_1_Copy != Space_1)
