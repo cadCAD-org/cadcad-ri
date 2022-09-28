@@ -26,6 +26,14 @@ def space_2():
     return Space_2
 
 
+@fixture
+def empty_space():
+    @space
+    class EmptySpace: pass
+
+    return EmptySpace
+
+
 def test_cartesian_product(space_1, space_2):
     # Test Commutative Properties
     Space_3 = space_1 * space_2
@@ -56,3 +64,8 @@ def test_repeated_merge_product(space_1):
 def test_copy(space_1):
     Space_1_Copy = space_1.copy()
     assert Space_1_Copy.is_equivalent(space_1) and (Space_1_Copy != space_1)
+
+
+def test_is_empty(space_1, empty_space):
+    assert not space_1.is_empty()
+    assert empty_space.is_empty()
