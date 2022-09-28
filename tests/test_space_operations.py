@@ -29,7 +29,8 @@ def space_2():
 @fixture
 def empty_space():
     @space
-    class EmptySpace: pass
+    class EmptySpace:
+        pass
 
     return EmptySpace
 
@@ -54,10 +55,10 @@ def test_merge_product(space_1, space_2):
 
 def test_repeated_merge_product(space_1):
     N = 5
-    Space_1_N = space_1 ** N
+    Space_1_N = space_1**N
     assert len(Space_1_N.dimensions()) == N
     for dim_name, dim_type in Space_1_N.dimensions().items():
-        assert 'space_1' in dim_name
+        assert "space_1" in dim_name
         assert dim_type == space_1.__name__
 
 
@@ -73,8 +74,8 @@ def test_is_empty(space_1, empty_space):
 
 def test_rename_dims(space_1):
     old_dims = space_1.dimensions()
-    new_dims = space_1.rename_dims({'d_1': 'new_name'}).dimensions()
-    assert new_dims == {'new_name' if k == 'd_1' else k: v for k, v in old_dims.items()}
+    new_dims = space_1.rename_dims({"d_1": "new_name"}).dimensions()
+    assert new_dims == {"new_name" if k == "d_1" else k: v for k, v in old_dims.items()}
 
 
 def test_dimensions():
@@ -83,7 +84,7 @@ def test_dimensions():
         d_1: Integer
         d_2: Integer
 
-    assert MyNewSpace.dimensions() == {'d_1': 'Integer', 'd_2': 'Integer'}
+    assert MyNewSpace.dimensions() == {"d_1": "Integer", "d_2": "Integer"}
 
 
 def test_name():
@@ -92,7 +93,7 @@ def test_name():
         d_1: Integer
         d_2: Integer
 
-    assert MyNewSpace.name() == 'MyNewSpace'
+    assert MyNewSpace.name() == "MyNewSpace"
 
 
 def test_is_equivalent():
@@ -100,7 +101,6 @@ def test_is_equivalent():
     class SomeSpace:
         d_1: Integer
         d_2: Integer
-
 
     @space
     class SomeEquivalentSpace:
@@ -127,11 +127,7 @@ def test_unroll_schema():
         d_1: Integer
         d_2: SomeChildSpace
 
-    name2space = {
-        'Integer': Integer,
-        'Real': Real,
-        'SomeChildSpace': SomeChildSpace
-    }
+    name2space = {"Integer": Integer, "Real": Real, "SomeChildSpace": SomeChildSpace}
 
     def depth_first_search(schema, space):
         for dim, space_name in space.dimensions().items():

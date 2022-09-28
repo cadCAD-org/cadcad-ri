@@ -27,6 +27,7 @@ pydocstyle = "*"
 pylint = "*"
 numpy = ">=1.22"
 autopep8 = "^1.6.0"
+black = "^22.8.0"
 
 [tool.yapf]
 based_on_style = "pep8"
