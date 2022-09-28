@@ -3,12 +3,8 @@
 This should run as part of the CI/CD pipeline.
 """
 
-import pytest
+from cadcad.spaces import space, Integer
 
-from cadcad.spaces import EmptySpace, Integer, Real
-
-# from cadcad.errors import InstanceError
-from cadcad.spaces import space
 
 @space
 class Space_1:
@@ -19,7 +15,7 @@ class Space_1:
 class Space_2:
     d_3: Integer
     d_4: Integer
-    
+
 
 def test_cartesian_product():
     # Test Commutative Properties
@@ -38,7 +34,7 @@ def test_merge_product():
     assert len(Space_3.dimensions()) == len(Space_4.dimensions())
     assert len(Space_3.dimensions()) == (len(Space_1.dimensions()) + len(Space_2.dimensions()))
 
-    
+
 def test_repeated_merge_product():
     N = 5
     Space_1_N = Space_1 ** N
