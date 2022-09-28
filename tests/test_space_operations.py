@@ -3,7 +3,7 @@
 This should run as part of the CI/CD pipeline.
 """
 from pytest import fixture
-from cadcad.spaces import space, Integer
+from cadcad.spaces import space, Integer, Real
 
 
 @fixture
@@ -93,3 +93,24 @@ def test_name():
         d_2: Integer
 
     assert MyNewSpace.name() == 'MyNewSpace'
+
+
+def test_is_equivalent():
+    @space
+    class SomeSpace:
+        d_1: Integer
+        d_2: Integer
+
+
+    @space
+    class SomeEquivalentSpace:
+        foo: Integer
+        bar: Integer
+
+    @space
+    class SomeNonEquivalentSpace:
+        d_1: Integer
+        d_2: Real
+
+    assert SomeSpace.is_equivalent(SomeEquivalentSpace)
+    assert not SomeSpace.is_equivalent(SomeNonEquivalentSpace)
