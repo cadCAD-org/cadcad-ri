@@ -3,7 +3,7 @@
 This should run as part of the CI/CD pipeline.
 """
 from pytest import fixture
-from cadcad.spaces import space, Integer, Real
+from cadcad.spaces import space, Space, Integer, Real
 
 
 @fixture
@@ -114,3 +114,34 @@ def test_is_equivalent():
 
     assert SomeSpace.is_equivalent(SomeEquivalentSpace)
     assert not SomeSpace.is_equivalent(SomeNonEquivalentSpace)
+
+
+def test_unroll_schema():
+    @space
+    class SomeChildSpace:
+        d_1: Integer
+        d_2: Real
+
+    @space
+    class SomeParentSpace:
+        d_1: Integer
+        d_2: SomeChildSpace
+
+    name2space = {
+        'Integer': Integer,
+        'Real': Real,
+        'SomeChildSpace': SomeChildSpace
+    }
+
+    def depth_first_search(schema, space):
+        for dim, space_name in space.dimensions().items():
+            if space_name in name2space:
+                schema[dim] = {}
+                depth_first_search(schema[dim], name2space[space_name])
+            else:
+                schema[dim] = space_name
+
+    expected_schema = {}
+    depth_first_search(expected_schema, SomeParentSpace)
+
+    assert SomeParentSpace.unroll_schema() == expected_schema
