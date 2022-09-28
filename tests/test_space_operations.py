@@ -69,3 +69,9 @@ def test_copy(space_1):
 def test_is_empty(space_1, empty_space):
     assert not space_1.is_empty()
     assert empty_space.is_empty()
+
+
+def test_rename_dims(space_1):
+    old_dims = space_1.dimensions()
+    new_dims = space_1.rename_dims({'d_1': 'new_name'}).dimensions()
+    assert new_dims == {'new_name' if k == 'd_1' else k: v for k, v in old_dims.items()}
