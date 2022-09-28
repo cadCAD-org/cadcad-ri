@@ -84,3 +84,12 @@ def test_dimensions():
         d_2: Integer
 
     assert MyNewSpace.dimensions() == {'d_1': 'Integer', 'd_2': 'Integer'}
+
+
+def test_name():
+    @space
+    class MyNewSpace:
+        d_1: Integer
+        d_2: Integer
+
+    assert MyNewSpace.name() == 'MyNewSpace'
