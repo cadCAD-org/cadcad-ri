@@ -75,3 +75,12 @@ def test_rename_dims(space_1):
     old_dims = space_1.dimensions()
     new_dims = space_1.rename_dims({'d_1': 'new_name'}).dimensions()
     assert new_dims == {'new_name' if k == 'd_1' else k: v for k, v in old_dims.items()}
+
+
+def test_dimensions():
+    @space
+    class MyNewSpace:
+        d_1: Integer
+        d_2: Integer
+
+    assert MyNewSpace.dimensions() == {'d_1': 'Integer', 'd_2': 'Integer'}
