@@ -3,7 +3,7 @@
 This should run as part of the CI/CD pipeline.
 """
 from pytest import fixture
-from cadcad.spaces import space, Space, Integer, Real
+from cadcad.spaces import space, Integer, Real
 
 
 @fixture
