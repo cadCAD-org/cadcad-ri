@@ -127,17 +127,12 @@ def test_unroll_schema():
         d_1: Integer
         d_2: SomeChildSpace
 
-    name2space = {"Integer": Integer, "Real": Real, "SomeChildSpace": SomeChildSpace}
-
-    def depth_first_search(schema, space):
-        for dim, space_name in space.dimensions().items():
-            if space_name in name2space:
-                schema[dim] = {}
-                depth_first_search(schema[dim], name2space[space_name])
-            else:
-                schema[dim] = space_name
-
-    expected_schema = {}
-    depth_first_search(expected_schema, SomeParentSpace)
+    expected_schema = {
+        'd_1': {'integer': 'int'},
+        'd_2': {
+            'd_1': {'integer': 'int'},
+            'd_2': {'real': 'float'}
+        }
+    }
 
     assert SomeParentSpace.unroll_schema() == expected_schema
