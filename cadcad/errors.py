@@ -54,3 +54,22 @@ class IllFormedError(Exception):
         self.message = "Attempted to decorate an ill formed class."
 
         super().__init__(self.message)
+
+
+class WiringError(Exception):
+    """Exception raised when the codomain of a given block does not *exactly match* the
+    domain of the subsequent block."""
+
+    def __init__(self, curr_block, next_block) -> None:
+        self.message = f"Block ({curr_block}) codomain does not *exactly match* subsequent block ({next_block}) domain."
+
+        super().__init__(self.message)
+
+
+class BlockInputError(Exception):
+    """Exception raised when the block input Point is not found in the block's domain."""
+
+    def __init__(self, space, domain) -> None:
+        self.message = f"Block input point (in space {space}) not found in its domain ({domain})"
+
+        super().__init__(self.message)
