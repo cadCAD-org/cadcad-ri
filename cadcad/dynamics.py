@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from copy import deepcopy
 from dataclasses import dataclass
-from typing import Any, Callable, Collection, Optional, Union, get_args
+from typing import Any, Callable, Collection, List, Optional, Union, get_args
 
 from cadcad.points import Point, TSpace_co
 from cadcad.spaces import Space
@@ -108,6 +108,25 @@ class Block:
     def codomains(self) -> Union[Point, Collection[Point]]:
         """Get the codomains of the block."""
         return self.__codomain
+
+    @property
+    def codomain_names(self) -> Union[str, List[str]]:
+        return self._get_space_names(self.codomains)
+
+    @property
+    def domain_names(self) -> Union[str, List[str]]:
+        return self._get_space_names(self.domain)
+
+    @staticmethod
+    def _get_space_names(points: Union[Point, Collection[Point]]) -> Union[str, List[str]]:
+        if isinstance(points, (list, tuple)):
+            names = []
+            for pt in points:
+                space, = pt.__args__  # Point should only have 1 arg
+                names.append(space.name())
+            return names
+        space, = points.__args__  # points is a single Point; Point should only have 1 arg
+        return space.name()
 
     @property
     def param_space(self) -> Optional[Space]:

@@ -4,6 +4,7 @@ from dataclasses import dataclass
 from typing import Any, Dict, List, Tuple
 
 from cadcad.dynamics import Block
+from cadcad.errors import BlockOutputError, WiringError, BlockInputError
 from cadcad.points import Point
 
 
@@ -53,6 +54,25 @@ class Experiment:
     experiment_params: Dict[str, Any]
     pipeline: Tuple[Block]
 
+    def __post_init__(self):
+        self._validate_pipeline()
+
+    def _validate_pipeline(self):
+        for i in range(len(self.pipeline) - 1):
+            curr_block = self.pipeline[i]
+            next_block = self.pipeline[i + 1]
+            if curr_block.codomain_names != next_block.domain_names:
+                raise WiringError(curr_block, next_block)
+
+    @staticmethod
+    def _execute_and_validate_block(current_state, block):
+        if current_state.space.name() != block.domain_names:
+            raise BlockInputError(current_state, block)
+        next_state = block(current_state)
+        if next_state.space.name() != block.codomain_names:
+            raise BlockOutputError(block, next_state)
+        return next_state
+
     def run(self) -> List[Trajectory]:
         """_summary_
 
@@ -68,7 +88,7 @@ class Experiment:
             result = Trajectory()
             for _ in range(self.experiment_params["steps"]):
                 for block in self.pipeline:
-                    next_state = block(current_state)
+                    next_state = self._execute_and_validate_block(current_state, block)
                     current_state = next_state
                 result.append(current_state)
 
