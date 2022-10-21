@@ -29,7 +29,12 @@ def block(
     Callable
         _description_
     """
-    return_type = func.__annotations__["return"]
+    func_annotations = deepcopy(func.__annotations__)
+
+    if not func_annotations:
+        raise ValueError("The block function must be type annotated")
+
+    return_type = func_annotations["return"]
     specialized_type = get_args(return_type)[0]
 
     if issubclass(return_type.__origin__, Point) and isinstance(
@@ -47,7 +52,12 @@ def block(
             "The return of a block function must be a point of a space or a collection of them."
         )
 
-    domain_type = func.__annotations__["domain"]
+    del func_annotations["return"]
+
+    if len(func_annotations) != 1:
+        raise ValueError("The block function must have exactly one argument")
+
+    domain_type = tuple(func_annotations.values())[0]
     specialized_domain_type = get_args(domain_type)[0]
 
     if issubclass(domain_type.__origin__, Point) and isinstance(
