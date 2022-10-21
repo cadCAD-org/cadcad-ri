@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "cadcad"
-version = "0.1.0"
+version = "0.5.0"
 description = "Design, test and validate complex systems through simulation. Reference Implementation."
 authors = [
     "Emanuel Lima <emanuel@block.science>",
@@ -9,14 +9,13 @@ authors = [
 ]
 
 [tool.poetry.dependencies]
-python = ">=3.10, <4.0"
-tqdm = "^4.62.3"
-frozendict = "^2.3.0"
+python = "^3.10"
+tqdm = "^4"
 
 [tool.poetry.dev-dependencies]
 pytest = "*"
 pytest-cov = "*"
-yapf = "*"
+black = "*"
 flake8 = "*"
 flake8-debugger = "*"
 flake8-pytest-style = "*"
@@ -25,14 +24,21 @@ mypy = "*"
 pep8-naming = "*"
 pydocstyle = "*"
 pylint = "*"
-numpy = ">=1.22"
 
-[tool.yapf]
-based_on_style = "pep8"
+[tool.black]
 indent_width = 4
+line-length = 100
 
 [tool.isort]
 line_length = 100
+profile = "black"
+
+[tool.flake8]
+extend-ignore = "E203"
+max-line-length = 100
+
+[tool.pylint.format]
+max-line-length = "100"
 
 [tool.pytest.ini_options]
 filterwarnings = ["ignore::DeprecationWarning"]
