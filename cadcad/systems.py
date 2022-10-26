@@ -52,7 +52,7 @@ class Experiment:
 
     init_state: Point
     experiment_params: Dict[str, Any]
-    pipeline: Tuple[Block]
+    pipeline: Tuple[Block, ...]
 
     def __post_init__(self):
         self._validate_pipeline()

@@ -12,8 +12,8 @@ from cadcad.spaces import Space
 
 def block(
     func: Callable[
-        [Union[Point[TSpace_co], Collection[Point[TSpace_co]]]],
-        Union[Point[TSpace_co], Collection[Point[TSpace_co]]],
+        [Union[Point[Space], Collection[Point[Space]]]],
+        Union[Point[Space], Collection[Point[Space]]],
     ],
     param_space: Optional[Space] = None,
 ) -> Block:

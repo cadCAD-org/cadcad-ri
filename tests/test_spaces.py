@@ -3,31 +3,34 @@
 This should run as part of the CI/CD pipeline.
 """
 from pytest import fixture
-from cadcad.spaces import space, Integer, Real
+
+from cadcad.spaces import Integer, Real, Space, space
+
+# pylint: disable=missing-function-docstring, missing-class-docstring, invalid-name, redefined-outer-name  # noqa: E501
 
 
 @fixture
-def space_1():
+def space1() -> type:
     @space
-    class Space_1:
+    class Space1:
         d_1: Integer
         d_2: Integer
 
-    return Space_1
+    return Space1
 
 
 @fixture
-def space_2():
+def space2() -> type:
     @space
-    class Space_2:
+    class Space2:
         d_3: Integer
         d_4: Integer
 
-    return Space_2
+    return Space2
 
 
 @fixture
-def empty_space():
+def emptyspace() -> type:
     @space
     class EmptySpace:
         pass
@@ -35,50 +38,50 @@ def empty_space():
     return EmptySpace
 
 
-def test_cartesian_product(space_1, space_2):
+def test_cartesian_product(space1: Space, space2: Space) -> None:
     # Test Commutative Properties
-    Space_3 = space_1 * space_2
-    Space_4 = space_2 * space_1
+    Space_3 = space1 * space2  # noqa: N806
+    Space_4 = space2 * space1  # noqa: N806
     assert Space_3.unroll_schema() == Space_4.unroll_schema()
     assert len(Space_3.dimensions()) == len(Space_4.dimensions())
     assert len(Space_3.dimensions()) == 2
 
 
-def test_merge_product(space_1, space_2):
+def test_merge_product(space1: Space, space2: Space) -> None:
     # Test Commutative Properties
-    Space_3 = space_1 + space_2
-    Space_4 = space_2 + space_1
+    Space_3 = space1 + space2  # noqa: N806
+    Space_4 = space2 + space1  # noqa: N806
     assert Space_3.unroll_schema() == Space_4.unroll_schema()
     assert len(Space_3.dimensions()) == len(Space_4.dimensions())
-    assert len(Space_3.dimensions()) == (len(space_1.dimensions()) + len(space_2.dimensions()))
+    assert len(Space_3.dimensions()) == (len(space1.dimensions()) + len(space2.dimensions()))
 
 
-def test_repeated_merge_product(space_1):
-    N = 5
-    Space_1_N = space_1**N
-    assert len(Space_1_N.dimensions()) == N
+def test_repeated_merge_product(space1: Space) -> None:
+    n = 5
+    Space_1_N = space1**n  # noqa: N806
+    assert len(Space_1_N.dimensions()) == n
     for dim_name, dim_type in Space_1_N.dimensions().items():
-        assert "space_1" in dim_name
-        assert dim_type == space_1.__name__
+        assert "space1" in dim_name
+        assert dim_type == space1.__name__
 
 
-def test_copy(space_1):
-    Space_1_Copy = space_1.copy()
-    assert Space_1_Copy.is_equivalent(space_1) and (Space_1_Copy != space_1)
+def test_copy(space1: Space) -> None:
+    Space_1_Copy = space1.copy()  # noqa: N806
+    assert Space_1_Copy.is_equivalent(space1) and (Space_1_Copy != space1)
 
 
-def test_is_empty(space_1, empty_space):
-    assert not space_1.is_empty()
-    assert empty_space.is_empty()
+def test_is_empty(space1: Space, emptyspace: Space) -> None:
+    assert not space1.is_empty()
+    assert emptyspace.is_empty()
 
 
-def test_rename_dims(space_1):
-    old_dims = space_1.dimensions()
-    new_dims = space_1.rename_dims({"d_1": "new_name"}).dimensions()
+def test_rename_dims(space1: Space) -> None:
+    old_dims = space1.dimensions()
+    new_dims = space1.rename_dims({"d_1": "new_name"}).dimensions()
     assert new_dims == {"new_name" if k == "d_1" else k: v for k, v in old_dims.items()}
 
 
-def test_dimensions():
+def test_dimensions() -> None:
     @space
     class MyNewSpace:
         d_1: Integer
@@ -87,7 +90,7 @@ def test_dimensions():
     assert MyNewSpace.dimensions() == {"d_1": "Integer", "d_2": "Integer"}
 
 
-def test_name():
+def test_name() -> None:
     @space
     class MyNewSpace:
         d_1: Integer
@@ -96,7 +99,7 @@ def test_name():
     assert MyNewSpace.name() == "MyNewSpace"
 
 
-def test_is_equivalent():
+def test_is_equivalent() -> None:
     @space
     class SomeSpace:
         d_1: Integer
@@ -116,7 +119,7 @@ def test_is_equivalent():
     assert not SomeSpace.is_equivalent(SomeNonEquivalentSpace)
 
 
-def test_unroll_schema():
+def test_unroll_schema() -> None:
     @space
     class SomeChildSpace:
         d_1: Integer
@@ -128,11 +131,8 @@ def test_unroll_schema():
         d_2: SomeChildSpace
 
     expected_schema = {
-        'd_1': {'integer': 'int'},
-        'd_2': {
-            'd_1': {'integer': 'int'},
-            'd_2': {'real': 'float'}
-        }
+        "d_1": {"integer": "int"},
+        "d_2": {"d_1": {"integer": "int"}, "d_2": {"real": "float"}},
     }
 
     assert SomeParentSpace.unroll_schema() == expected_schema
