@@ -2,11 +2,12 @@
 
 This should run as part of the CI/CD pipeline.
 """
-from pytest import fixture
+from pytest import fixture, raises
 
-from cadcad.spaces import Integer, Real, Space, space
+from cadcad.errors import IllFormedError
+from cadcad.spaces import Bit, EmptySpace, Integer, Real, Space, multiply, space
 
-# pylint: disable=missing-function-docstring, missing-class-docstring, invalid-name, redefined-outer-name  # noqa: E501
+# pylint: disable=line-too-long, missing-function-docstring, missing-class-docstring, invalid-name, redefined-outer-name  # noqa: E501
 
 
 @fixture
@@ -136,3 +137,33 @@ def test_unroll_schema() -> None:
     }
 
     assert SomeParentSpace.unroll_schema() == expected_schema
+
+
+def test_space_str() -> None:
+    assert str(Real) == "Space Real has dimensions {'real': 'float'}"
+    assert str(EmptySpace) == "Empty space EmptySpace"
+
+
+def test_illformed_space() -> None:
+    with raises(IllFormedError):
+
+        @space
+        class BadSpace:  # pylint: disable=unused-variable
+            dim: 4
+
+
+def test_multiply() -> None:
+    assert (
+        str(multiply([Real, Bit, Integer]))
+        == "Space RealxBitxInteger has dimensions {'real_0': 'Real', 'bit_1': 'Bit', 'integer_2': 'Integer'}"  # noqa: E501
+    )
+
+
+def test_rename() -> None:
+    assert str(Real.rename_dims({"real": "x"})) == "Space Real has dimensions {'x': 'float'}"
+
+    with raises(KeyError):
+        Real.rename_dims({"r": "x"})
+
+    with raises(KeyError):
+        Real.rename_dims({"real": "real"})

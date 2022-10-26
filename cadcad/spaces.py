@@ -2,7 +2,7 @@
 
 import logging
 from copy import deepcopy
-from typing import Any, Dict, Generator, List, Union, get_type_hints
+from typing import Any, Dict, Generator, Collection, Union, get_type_hints
 
 from cadcad.errors import IllFormedError, InstanceError
 
@@ -76,7 +76,7 @@ def space(cls: type) -> type:
     return NewSpace
 
 
-def multiply(operands: List[type]) -> type:
+def multiply(operands: Collection[type]) -> type:
     """_summary_
 
     Parameters
