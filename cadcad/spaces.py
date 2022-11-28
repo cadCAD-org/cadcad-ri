@@ -2,7 +2,7 @@
 
 import logging
 from copy import deepcopy
-from typing import Any, Dict, Generator, Collection, Union, get_type_hints
+from typing import Any, Collection, Dict, Generator, Union, get_type_hints
 
 from cadcad.errors import IllFormedError, InstanceError
 
@@ -285,9 +285,7 @@ def __power(cls: type, dimension_n: int) -> type:
         return cls
 
     if isinstance(dimension_n, int) and dimension_n > 1:
-        new_annotation = {
-            f"{cls.__name__.lower()}_{i}": deepcopy(cls) for i in range(dimension_n)
-        }
+        new_annotation = {f"{cls.__name__.lower()}_{i}": deepcopy(cls) for i in range(dimension_n)}
         new_space = type(f"{dimension_n}-{cls.__name__}", (object,), dict(cls.__dict__))
         setattr(new_space, "__annotations__", new_annotation)
 
@@ -416,9 +414,7 @@ def __is_equivalent(cls: type, other: type) -> bool:
     bool
         _description_
     """
-    return list(__dimensions(cls, True).values()) == list(
-        __dimensions(other, True).values()
-    )
+    return list(__dimensions(cls, True).values()) == list(__dimensions(other, True).values())
 
 
 @space

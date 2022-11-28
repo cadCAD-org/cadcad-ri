@@ -5,7 +5,7 @@ lint:
 	@echo
 	isort --diff -c .
 	@echo
-	yapf --diff .
+	black --diff --color.
 	@echo
 	flake8 .
 	@echo
@@ -13,4 +13,4 @@ lint:
 
 format:
 	isort .
-	yapf --in-place .
+	black -q .
