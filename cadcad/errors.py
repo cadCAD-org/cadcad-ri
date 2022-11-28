@@ -17,9 +17,7 @@ class CopyError(Exception):
 
     def __init__(self, obj_type: type) -> None:
         """Raise with default message."""
-        self.message = (
-            f"Attempted to copy a {obj_type} object through the copy library."
-        )
+        self.message = f"Attempted to copy a {obj_type} object through the copy library."
         super().__init__(self.message)
 
 

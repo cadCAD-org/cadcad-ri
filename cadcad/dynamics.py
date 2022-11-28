@@ -37,9 +37,7 @@ def block(
     return_type = func_annotations["return"]
     specialized_type = get_args(return_type)[0]
 
-    if issubclass(return_type.__origin__, Point) and isinstance(
-        specialized_type, Space
-    ):
+    if issubclass(return_type.__origin__, Point) and isinstance(specialized_type, Space):
         codomain: Union[Point[Space], Collection[Point[Space]]] = return_type
     elif (
         isinstance(return_type, Collection)
@@ -60,9 +58,7 @@ def block(
     domain_type = tuple(func_annotations.values())[0]
     specialized_domain_type = get_args(domain_type)[0]
 
-    if issubclass(domain_type.__origin__, Point) and isinstance(
-        specialized_domain_type, Space
-    ):
+    if issubclass(domain_type.__origin__, Point) and isinstance(specialized_domain_type, Space):
         domain = domain_type
     elif (
         isinstance(domain_type, Collection)
@@ -132,10 +128,10 @@ class Block:
         if isinstance(points, (list, tuple)):
             names = []
             for pt in points:
-                space, = pt.__args__  # Point should only have 1 arg
+                (space,) = pt.__args__  # Point should only have 1 arg
                 names.append(space.name())
             return names
-        space, = points.__args__  # points is a single Point; Point should only have 1 arg
+        (space,) = points.__args__  # points is a single Point; Point should only have 1 arg
         return space.name()
 
     @property

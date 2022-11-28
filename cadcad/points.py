@@ -21,9 +21,7 @@ class Point(Generic[TSpace_co]):
         dictionary of dimension names to data that obeys the dimension type
     """
 
-    def __init__(
-        self, space: TSpace_co, data: Dict[str, Any], check_types: bool = True
-    ):
+    def __init__(self, space: TSpace_co, data: Dict[str, Any], check_types: bool = True):
         """Build a space based on a tuple of dimensions.
 
         Args:
@@ -46,9 +44,7 @@ class Point(Generic[TSpace_co]):
             if check_schema(dims, data):
                 self.__data: Dict[str, Any] = data
             else:
-                received_type = [
-                    f"{name} -> {type(value)}" for name, value in data.items()
-                ]
+                received_type = [f"{name} -> {type(value)}" for name, value in data.items()]
                 raise ValueError(
                     "Schema mismatch between the Point's Space and the data given. "
                     + f"Expected {dims}, but received {received_type}"
@@ -107,22 +103,14 @@ def check_schema(dim_dict: Dict[str, type], data_dict: Dict[str, Any]) -> bool:
             inner_dims = dim_type.dimensions(as_types=True)  # type: ignore
             if check_schema(inner_dims, data_value):
                 confirmations += 1
-        elif (
-            dim_name == data_name
-            and specialized_type
-            and issubclass(dim_mro[0], Collection)
-        ):
+        elif dim_name == data_name and specialized_type and issubclass(dim_mro[0], Collection):
             if isinstance(specialized_type[0], Space):
                 inner_dims = specialized_type[0].dimensions(as_types=True)  # type: ignore
                 if check_schema(inner_dims, data_value[0]):
                     confirmations += 1
             elif isinstance(data_value[0], specialized_type[0]):
                 confirmations += 1
-        elif (
-            dim_name == data_name
-            and not specialized_type
-            and isinstance(data_value, dim_type)
-        ):
+        elif dim_name == data_name and not specialized_type and isinstance(data_value, dim_type):
             confirmations += 1
 
     if confirmations == len(data_dict):

@@ -4,7 +4,7 @@ from dataclasses import dataclass
 from typing import Any, Dict, List, Tuple
 
 from cadcad.dynamics import Block
-from cadcad.errors import BlockOutputError, WiringError, BlockInputError
+from cadcad.errors import BlockInputError, BlockOutputError, WiringError
 from cadcad.points import Point
 
 
