@@ -6,7 +6,7 @@ from copy import deepcopy
 from dataclasses import dataclass
 from typing import Any, Callable, Collection, List, Optional, Union, get_args
 
-from cadcad.points import Point, TSpace_co
+from cadcad.points import Point
 from cadcad.spaces import Space
 
 

@@ -7,7 +7,9 @@ To set up a development environment:
 - Install [Poetry](https://python-poetry.org/docs/master/#installation)
 - Install `Make` (this will be deprecated in the future)
 - Then, do `poetry config virtualenvs.in-project true` (Only once. This will be valid for all Poetry projects on your machine.)
-- Clone this repository
+- Fork this repository and clone your fork
+- Change to the `dev` branch
+- Create a new branch from `dev` (optional)
 - On the root of the repository, do `poetry install --no-root`
 - Don't forget to activate the virtual environment (the `.venv` folder) on your IDE
 
@@ -23,7 +25,8 @@ Now you are good to make a PR. If you want to be absolutely sure that your code 
 
 - `poetry run make lint`
 
-Fix the errors, if any, and then open the PR.
+Fix the errors, if any, and then open the PR from your branch (either `dev` or the one you created)
+to the `dev` branch of the official repository.
 
 ## Writing tests
 

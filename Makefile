@@ -8,8 +8,6 @@ lint:
 	black --diff --color .
 	@echo
 	flake8 .
-	@echo
-	mypy .
 
 format:
 	isort .
