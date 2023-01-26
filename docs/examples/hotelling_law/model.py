@@ -1,11 +1,12 @@
-from cadcad.spaces import Space
-from cadcad.dynamics import Block
-import numpy as np
+from dataclasses import dataclass
 from math import sqrt
 from random import choice
-
 from typing import Generator
-from dataclasses import dataclass
+
+import numpy as np
+
+from cadcad.dynamics import Block
+from cadcad.spaces import Space
 
 UP = np.array([0, 1])
 DOWN = np.array([0, -1])
@@ -14,33 +15,31 @@ RIGHT = np.array([-1, 0])
 
 
 @dataclass
-class Hotels():
+class Hotels:
     uuid: int
     location: np.ndarray
     price: float
 
 
 @dataclass
-class ConsumerState():
+class ConsumerState:
     hotel_grid: np.ndarray
     market_share: dict[int, float]
     revenue: dict[int, float]
 
 
 @dataclass
-class WorldState():
+class WorldState:
     hotels: list[Hotels]
     market_share: ConsumerState
 
 
 @dataclass
-class WorldParams():
+class WorldParams:
     world_shape: tuple[int, int]
 
 
-def compute_market_share_grid(n_X: int,
-                              n_Y: int,
-                              hotels: list[Hotels]) -> np.ndarray:
+def compute_market_share_grid(n_X: int, n_Y: int, hotels: list[Hotels]) -> np.ndarray:
     hotel_grid = np.zeros([n_X, n_Y])
 
     # Iterate on each grid point and compute the best hotel using an
@@ -53,7 +52,7 @@ def compute_market_share_grid(n_X: int,
                 # Euclidean norm
                 dx = x - hotel.location[0]
                 dy = y - hotel.location[1]
-                distance = sqrt(dx ** 2 + dy ** 2)
+                distance = sqrt(dx**2 + dy**2)
                 current_sum = distance + hotel.price
                 if current_sum < lower_sum:
                     lower_sum = current_sum
@@ -71,14 +70,11 @@ def compute_market_share(hotel_grid: np.ndarray) -> dict[int, float]:
     return dict(zip(*uuid_frequency))
 
 
-def compute_revenues(hotels: list[Hotels],
-                     market_shares: dict[int, float]) -> dict[int, float]:
-    return {hotel.uuid: market_shares[hotel.uuid] * hotel.price
-            for hotel in hotels}
+def compute_revenues(hotels: list[Hotels], market_shares: dict[int, float]) -> dict[int, float]:
+    return {hotel.uuid: market_shares[hotel.uuid] * hotel.price for hotel in hotels}
 
 
-def realize_consumption(hotels: list[Hotels],
-                        world_params: WorldParams) -> ConsumerState:
+def realize_consumption(hotels: list[Hotels], world_params: WorldParams) -> ConsumerState:
     n_X = world_params.world_shape[0]
     n_Y = world_params.world_shape[1]
 
@@ -89,8 +85,7 @@ def realize_consumption(hotels: list[Hotels],
     return ConsumerState(hotel_grid, market_shares, revenues)
 
 
-def hotel_decisions(world_state: WorldState,
-                    world_params: WorldParams) -> list[Hotels]:
+def hotel_decisions(world_state: WorldState, world_params: WorldParams) -> list[Hotels]:
 
     n_X = world_params.world_shape[0]
     n_Y = world_params.world_shape[1]
@@ -132,7 +127,7 @@ def hotel_decisions(world_state: WorldState,
 
 
 @dataclass
-class HotellingLawModel():
+class HotellingLawModel:
     hotels: list[Hotels]
     consumers: ConsumerState
     world_params: WorldParams
@@ -140,7 +135,6 @@ class HotellingLawModel():
     @property
     def world_state(self) -> WorldState:
         return WorldState(self.hotels, self.consumers)
-
 
     def step(self) -> None:
         self.consumers = realize_consumption(self.hotels, self.world_params)

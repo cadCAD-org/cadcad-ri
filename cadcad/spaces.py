@@ -64,9 +64,8 @@ def space(cls: type) -> type:
     """
 
     # Fix a bug on some environments where the annotations field does not exists.
-    if not hasattr(cls, '__annotations__'):
-        setattr(cls, '__annotations__', {})
-
+    if not hasattr(cls, "__annotations__"):
+        setattr(cls, "__annotations__", {})
 
     for value in cls.__annotations__.values():
         if not isinstance(value, type):
@@ -116,9 +115,7 @@ def multiply(operands: Collection[type]) -> type:
     new_space.__name__ = "x".join([f"{cls.__name__}" for cls in operands])
 
     new_annotation = {
-        f"{cls.__name__.lower()}_{i}": deepcopy(cls)
-        for i, cls
-         in enumerate(operands)
+        f"{cls.__name__.lower()}_{i}": deepcopy(cls) for i, cls in enumerate(operands)
     }
 
     setattr(new_space, "__annotations__", new_annotation)
@@ -476,6 +473,7 @@ class Real:
     """
     The one dimensional space of real numbers.
     """
+
     real: float
 
 
@@ -484,6 +482,7 @@ class Integer:
     """
     The one dimensional space of integer numbers.
     """
+
     integer: int
 
 

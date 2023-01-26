@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import itertools
 from copy import deepcopy
 from dataclasses import dataclass
 from typing import Any, Callable, Collection, List, Optional, Union, get_args
@@ -52,24 +53,25 @@ def block(
 
     del func_annotations["return"]
 
-    if len(func_annotations) != 1:
-        raise ValueError("The block function must have exactly one argument")
+    domain_types = list(func_annotations.values())
+    specialized_domain = [get_args(dom) for dom in domain_types]
+    specialized_domain_types = list(itertools.chain(*specialized_domain))
 
-    domain_type = tuple(func_annotations.values())[0]
-    specialized_domain_type = get_args(domain_type)[0]
+    domain: List[Point] = []
 
-    if issubclass(domain_type.__origin__, Point) and isinstance(specialized_domain_type, Space):
-        domain = domain_type
-    elif (
-        isinstance(domain_type, Collection)
-        and isinstance(specialized_domain_type, Point)
-        and isinstance(get_args(specialized_domain_type)[0], Space)
-    ):
-        domain = domain_type  # type: ignore
-    else:
-        raise TypeError(
-            "The domain of a block function must be a point of a space or a collection of them."
-        )
+    for domain_tuple in zip(domain_types, specialized_domain_types):
+        if issubclass(domain_tuple[0].__origin__, Point) and isinstance(domain_tuple[1], Space):
+            domain.append(domain_tuple[0])
+        elif (
+            isinstance(domain_tuple[0], Collection)
+            and isinstance(domain_tuple[1], Point)
+            and isinstance(get_args(domain_tuple[1])[0], Space)
+        ):
+            domain.append(domain_tuple[0])  # type: ignore
+        else:
+            raise TypeError(
+                "The domain of a block function must be a point of a space or a collection of them."
+            )
 
     return Block(func, domain, codomain, param_space)
 
@@ -111,13 +113,13 @@ class Block:
         return self.__domain
 
     @property
-    def codomains(self) -> Union[Point, Collection[Point]]:
+    def codomain(self) -> Union[Point, Collection[Point]]:
         """Get the codomains of the block."""
         return self.__codomain
 
     @property
     def codomain_names(self) -> Union[str, List[str]]:
-        return self._get_space_names(self.codomains)
+        return self._get_space_names(self.codomain)
 
     @property
     def domain_names(self) -> Union[str, List[str]]:

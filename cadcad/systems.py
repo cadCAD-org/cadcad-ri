@@ -1,7 +1,7 @@
 """Systems, Simulations and Experiments definitions."""
 
 from dataclasses import dataclass
-from typing import Any, Dict, List, Tuple
+from typing import Dict, List, Tuple
 
 from cadcad.dynamics import Block
 from cadcad.errors import BlockInputError, BlockOutputError, WiringError
@@ -51,7 +51,7 @@ class Experiment:
     """Main entrypoint of a cadCAD simulation"""
 
     init_state: Point
-    experiment_params: Dict[str, Any]
+    experiment_params: Dict[str, int]
     pipeline: Tuple[Block, ...]
 
     def __post_init__(self):
