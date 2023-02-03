@@ -49,12 +49,14 @@ class Space(type):
 # Add metrics, constraints and projections
 def space(cls: type) -> type:
     """
-    Decorator for generating a new Space type from a class definition that follows the Space semantics - i.e. dimensions are type-annotated member variables with undefined values.
+    Decorator for generating a new Space type from a class definition that follows the Space
+    semantics - i.e. dimensions are type-annotated member variables with undefined values.
 
     Parameters
     ----------
     cls : type
-        Space definition as a class, on which dimensions as type-annotated member variables with undefined values.
+        Space definition as a class, on which dimensions as type-annotated member variables with
+        undefined values.
 
 
     Returns
@@ -109,7 +111,8 @@ def multiply(operands: Collection[type]) -> type:
     Returns
     -------
     type
-        A new space on which dimensions are the union of the input spaces. The names follows an ordinal order.
+        A new space on which dimensions are the union of the input spaces. The names follows an
+        ordinal order.
     """
     new_space = __copy(EmptySpace)
     new_space.__name__ = "x".join([f"{cls.__name__}" for cls in operands])
@@ -151,7 +154,8 @@ def __dimensions(cls: type, as_types: bool = False) -> Dict[str, Union[type, str
 
 def __unroll_schema(cls: type) -> Dict[str, Union[dict, str]]:
     """
-    Extract a Dictionary schema of the Space dimensions. It is recursive if there are dimensions which are also Space.
+    Extract a Dictionary schema of the Space dimensions. It is recursive if there are dimensions
+    which are also Space.
 
     Parameters
     ----------
@@ -291,10 +295,12 @@ def __cartesian(cls: type, other: type) -> type:
 
 def __power(cls: type, dimension_n: int) -> type:
     """
-    Repeated merge of a space against itself, n times. Eg. `Space_1 ** 4 = Space_1 + Space_1 + Space_1 + Space_1`
+    Repeated merge of a space against itself, n times.
+    Eg. `Space_1 ** 4 = Space_1 + Space_1 + Space_1 + Space_1`
 
 
-    NOTE: The power of a space is not the repeating cartesian product of a space by itself, but rather it is the repeating merge operation.
+    NOTE: The power of a space is not the repeating cartesian product of a space by itself,
+    but rather it is the repeating merge operation.
 
     Parameters
     ----------
@@ -346,7 +352,8 @@ def __add(cls: type, other: type) -> type:
     Returns
     -------
     type
-        An merged space, on which the dimensions are the union of the dimensions of the input spaces.
+        An merged space, on which the dimensions are the union of
+        the dimensions of the input spaces.
     """
     if not isinstance(other, Space):
         raise TypeError("The left hand operand must be a Space")
@@ -377,7 +384,8 @@ def __nest(cls: type, name_change: bool = True) -> type:
     """
     Rolls the space dimensions into a new space, which then substitutes the input space dimensions.
 
-    Eg. on `Space_2 = Space_1.nest()`, `Space_2` has an single dimension with the name and value being `Space_1`.
+    Eg. on `Space_2 = Space_1.nest()`, `Space_2` has an single dimension with the name
+    and value being `Space_1`.
 
     Parameters
     ----------
