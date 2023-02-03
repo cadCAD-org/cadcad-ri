@@ -4,7 +4,7 @@ Definition of Spaces
 
 import logging
 from copy import deepcopy
-from typing import Any, Dict, Generator, List, Union, get_type_hints
+from typing import Any, Collection, Dict, Generator, Union, get_type_hints
 
 from cadcad.errors import IllFormedError, InstanceError
 
@@ -49,12 +49,14 @@ class Space(type):
 # Add metrics, constraints and projections
 def space(cls: type) -> type:
     """
-    Decorator for generating a new Space type from a class definition that follows the Space semantics - i.e. dimensions are type-annotated member variables with undefined values.
+    Decorator for generating a new Space type from a class definition that follows the Space
+    semantics - i.e. dimensions are type-annotated member variables with undefined values.
 
     Parameters
     ----------
     cls : type
-        Space definition as a class, on which dimensions as type-annotated member variables with undefined values.
+        Space definition as a class, on which dimensions as type-annotated member variables with
+        undefined values.
 
 
     Returns
@@ -64,9 +66,8 @@ def space(cls: type) -> type:
     """
 
     # Fix a bug on some environments where the annotations field does not exists.
-    if not hasattr(cls, '__annotations__'):
-        setattr(cls, '__annotations__', {})
-
+    if not hasattr(cls, "__annotations__"):
+        setattr(cls, "__annotations__", {})
 
     for value in cls.__annotations__.values():
         if not isinstance(value, type):
@@ -98,7 +99,7 @@ def space(cls: type) -> type:
     return NewSpace
 
 
-def multiply(operands: List[type]) -> type:
+def multiply(operands: Collection[type]) -> type:
     """
     Compose multiple spaces into a single space.
 
@@ -110,15 +111,14 @@ def multiply(operands: List[type]) -> type:
     Returns
     -------
     type
-        A new space on which dimensions are the union of the input spaces. The names follows an ordinal order.
+        A new space on which dimensions are the union of the input spaces. The names follows an
+        ordinal order.
     """
     new_space = __copy(EmptySpace)
     new_space.__name__ = "x".join([f"{cls.__name__}" for cls in operands])
 
     new_annotation = {
-        f"{cls.__name__.lower()}_{i}": deepcopy(cls) 
-        for i, cls
-         in enumerate(operands)
+        f"{cls.__name__.lower()}_{i}": deepcopy(cls) for i, cls in enumerate(operands)
     }
 
     setattr(new_space, "__annotations__", new_annotation)
@@ -154,7 +154,8 @@ def __dimensions(cls: type, as_types: bool = False) -> Dict[str, Union[type, str
 
 def __unroll_schema(cls: type) -> Dict[str, Union[dict, str]]:
     """
-    Extract a Dictionary schema of the Space dimensions. It is recursive if there are dimensions which are also Space.
+    Extract a Dictionary schema of the Space dimensions. It is recursive if there are dimensions
+    which are also Space.
 
     Parameters
     ----------
@@ -294,10 +295,12 @@ def __cartesian(cls: type, other: type) -> type:
 
 def __power(cls: type, dimension_n: int) -> type:
     """
-    Repeated merge of a space against itself, n times. Eg. `Space_1 ** 4 = Space_1 + Space_1 + Space_1 + Space_1`
+    Repeated merge of a space against itself, n times.
+    Eg. `Space_1 ** 4 = Space_1 + Space_1 + Space_1 + Space_1`
 
 
-    NOTE: The power of a space is not the repeating cartesian product of a space by itself, but rather it is the repeating merge operation.
+    NOTE: The power of a space is not the repeating cartesian product of a space by itself,
+    but rather it is the repeating merge operation.
 
     Parameters
     ----------
@@ -323,14 +326,12 @@ def __power(cls: type, dimension_n: int) -> type:
         return cls
 
     if isinstance(dimension_n, int) and dimension_n > 1:
-        new_annotation = {
-            f"{cls.__name__.lower()}_{i}": deepcopy(cls) for i in range(dimension_n)
-        }
+        new_annotation = {f"{cls.__name__.lower()}_{i}": deepcopy(cls) for i in range(dimension_n)}
         new_space = type(f"{dimension_n}-{cls.__name__}", (object,), dict(cls.__dict__))
         setattr(new_space, "__annotations__", new_annotation)
 
         return space(new_space)
-    
+
     raise TypeError("The left hand operand must be a positive integer")
 
 
@@ -351,7 +352,8 @@ def __add(cls: type, other: type) -> type:
     Returns
     -------
     type
-        An merged space, on which the dimensions are the union of the dimensions of the input spaces.
+        An merged space, on which the dimensions are the union of
+        the dimensions of the input spaces.
     """
     if not isinstance(other, Space):
         raise TypeError("The left hand operand must be a Space")
@@ -382,7 +384,8 @@ def __nest(cls: type, name_change: bool = True) -> type:
     """
     Rolls the space dimensions into a new space, which then substitutes the input space dimensions.
 
-    Eg. on `Space_2 = Space_1.nest()`, `Space_2` has an single dimension with the name and value being `Space_1`.
+    Eg. on `Space_2 = Space_1.nest()`, `Space_2` has an single dimension with the name
+    and value being `Space_1`.
 
     Parameters
     ----------
@@ -440,7 +443,7 @@ def __generate_key(existing_key: str) -> Generator[str, None, None]:
     Yields
     ------
     Generator for the dimension name.
-        
+
     """
     num = 1
     while True:
@@ -462,9 +465,7 @@ def __is_equivalent(cls: type, other: type) -> bool:
     bool
         True if the Space Dimensions are all equal, False otherwise.
     """
-    return list(__dimensions(cls, True).values()) == list(
-        __dimensions(other, True).values()
-    )
+    return list(__dimensions(cls, True).values()) == list(__dimensions(other, True).values())
 
 
 @space
@@ -480,6 +481,7 @@ class Real:
     """
     The one dimensional space of real numbers.
     """
+
     real: float
 
 
@@ -488,6 +490,7 @@ class Integer:
     """
     The one dimensional space of integer numbers.
     """
+
     integer: int
 
 
