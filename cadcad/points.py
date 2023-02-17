@@ -72,6 +72,12 @@ class Point(Generic[TSpace_co]):
         data = json.dumps(dict(self.data), indent=4, default=str)
         return f"Point in space {self.space.name()} has data{newl}{data}{newl}"  # type: ignore
 
+    def __repr__(self) -> str:
+        """Return a string representation of a point."""
+        newl = "\n"
+        data = json.dumps(dict(self.data), indent=4, default=str)
+        return f"Point in space {self.space.name()} has data{newl}{data}{newl}"  # type: ignore
+
 
 def check_schema(dim_dict: Dict[str, type], data_dict: Dict[str, Any]) -> bool:
     """_summary_
