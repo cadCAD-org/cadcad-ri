@@ -4,7 +4,7 @@ import json
 from inspect import getmro
 from typing import Any, Collection, Dict, Generic, TypeVar, get_args
 
-from cadcad.spaces import Space
+from cadcad.spaces import Space, EmptySpace
 
 TSpace_co = TypeVar("TSpace_co", bound=Space, covariant=True)
 
@@ -123,3 +123,6 @@ def check_schema(dim_dict: Dict[str, type], data_dict: Dict[str, Any]) -> bool:
         return True
 
     return False
+
+
+empty_point = Point(EmptySpace, {})
