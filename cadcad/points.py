@@ -4,12 +4,41 @@ import json
 from inspect import getmro
 from typing import Any, Collection, Dict, Generic, TypeVar, get_args
 
-from cadcad.spaces import Space, EmptySpace
+from cadcad.spaces import EmptySpace, Space
 
 TSpace_co = TypeVar("TSpace_co", bound=Space, covariant=True)
 
+class MetaPoint(type):
+    """
+    .
+    """
 
-class Point(Generic[TSpace_co]):
+    def __str__(cls: type) -> str:
+        """
+        .
+        """
+        try:
+            if not isinstance(cls.__args__[0], Space):  # type: ignore
+                raise TypeError("Points must be specialized by Spaces")
+            else:
+                return f"Point[{cls.__args__[0].name()}]"  # type: ignore
+        except AttributeError:
+            raise TypeError("Points must be specialized by Spaces")
+
+
+    def __repr__(cls) -> str:
+        """
+        .
+        """
+        try:
+            if not isinstance(cls.__args__[0], Space):  # type: ignore
+                raise TypeError("Points must be specialized by Spaces")
+            else:
+                return f"Point[{cls.__args__[0].name()}]"  # type: ignore
+        except AttributeError:
+            raise TypeError("Points must be specialized by Spaces")
+
+class Point(Generic[TSpace_co], metaclass=MetaPoint):
     """
     Points in cadCAD.
 
@@ -70,13 +99,13 @@ class Point(Generic[TSpace_co]):
         """Return a string representation of a point."""
         newl = "\n"
         data = json.dumps(dict(self.data), indent=4, default=str)
-        return f"Point in space {self.space.name()} has data{newl}{data}{newl}"  # type: ignore
+        return f"Point in space {self.space.name()} with data{newl}{data}{newl}"  # type: ignore
 
     def __repr__(self) -> str:
         """Return a string representation of a point."""
         newl = "\n"
         data = json.dumps(dict(self.data), indent=4, default=str)
-        return f"Point in space {self.space.name()} has data{newl}{data}{newl}"  # type: ignore
+        return f"Point in space {self.space.name()} with data{newl}{data}{newl}"  # type: ignore
 
 
 def check_schema(dim_dict: Dict[str, type], data_dict: Dict[str, Any]) -> bool:
