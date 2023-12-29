@@ -8,6 +8,7 @@ from cadcad.spaces import EmptySpace, Space
 
 TSpace_co = TypeVar("TSpace_co", bound=Space, covariant=True)
 
+# TODO: NewSpace on specialized point bug needs a MetaPoint approach
 class MetaPoint(type):
     """
     .

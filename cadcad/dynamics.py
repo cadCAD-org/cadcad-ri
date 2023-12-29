@@ -32,9 +32,6 @@ def block(
     """
     func_annotations = deepcopy(func.__annotations__)
 
-    print(func_annotations["return"])
-    print()
-
     if not func_annotations:
         raise ValueError("The block function must be type annotated")
 
@@ -326,4 +323,3 @@ def summation(*blocks: Block) -> Block:
         raise ValueError("At least one block must be provided")
 
     return block()
-
