@@ -38,7 +38,11 @@ def block(
     return_type = func_annotations["return"]
     specialized_type = get_args(return_type)[0]
 
-    if issubclass(return_type.__origin__, Point) and isinstance(specialized_type, Space):
+    if (
+        hasattr(return_type, "__origin__")
+        and issubclass(return_type.__origin__, Point)
+        and isinstance(specialized_type, Space)
+    ):
         codomain: Union[Point[Space], Collection[Point[Space]]] = return_type
     elif (
         isinstance(return_type, Collection)
@@ -60,7 +64,11 @@ def block(
     domain: List[Point] = []
 
     for domain_tuple in zip(domain_types, specialized_domain_types):
-        if issubclass(domain_tuple[0].__origin__, Point) and isinstance(domain_tuple[1], Space):
+        if (
+            hasattr(domain_tuple[0], "__origin__")
+            and issubclass(domain_tuple[0].__origin__, Point)
+            and isinstance(domain_tuple[1], Space)
+        ):
             domain.append(domain_tuple[0])
         elif (
             isinstance(domain_tuple[0], Collection)
@@ -145,6 +153,22 @@ class Block:
         """Get the name of the block."""
         return self.__function.__name__
 
+    def is_composable(self, blk: Block) -> bool:
+        """_summary_
+
+        Parameters
+        ----------
+        blk : Block
+            _description_
+
+        Returns
+        -------
+        bool
+            _description_
+        """
+        # TODO: Refactor for other compositions
+        return self.codomain == blk.domain[0]
+
     def __copy(self) -> Block:
         """Make a deep copy of a block object.
 
@@ -173,8 +197,8 @@ class Block:
         newline = "\n"
 
         str_result = f"Block {self.function.__name__} "
-        str_result += f"has domains: {newline}-> {self.domain},{newline}"
-        str_result += f"has codomains: {newline}-> {self.codomains},{newline}"
+        str_result += f"has domain: {newline}-> {self.domain},{newline}"
+        str_result += f"has codomain: {newline}-> {self.codomain},{newline}"
 
         if self.param_space:
             str_result += f"has parameter space {self.param_space} "
@@ -183,3 +207,119 @@ class Block:
 
     def __call__(self, *args: Any, **kwargs: Any) -> Any:
         return self.__function(*args, **kwargs)
+
+############ Built-in Blocks ############
+
+def pass_through(block: Block) -> Block:
+    """_summary_
+
+    Parameters
+    ----------
+    block : Block
+        _description_
+
+    Returns
+    -------
+    Block
+        _description_
+    """
+    if not isinstance(block, Block):
+        raise TypeError("The argument must be a block")
+
+    # TODO: Pass through composition of blocks
+    def new_function(*args: Any, **kwargs: Any) -> Point[Space] | Collection[Point[Space]]:
+        return block.function(*args, **kwargs)
+
+    annotation_dict = deepcopy(block.function.__annotations__)
+
+    new_function.__annotations__.clear()
+    new_function.__annotations__.update(annotation_dict)
+
+    return block(new_function)
+
+def cartesian_product(*blocks: Block) -> Block:
+    """_summary_
+
+    Parameters
+    ----------
+    blocks : List[Block]
+        _description_
+
+    Returns
+    -------
+    Block
+        _description_
+    """
+    if not blocks:
+        raise ValueError("At least one block must be provided")
+
+    def new_function(*args: Any, **kwargs: Any) -> Point[Space] | Collection[Point[Space]]:
+        return list(itertools.product(*[blk.function(*args, **kwargs) for blk in blocks]))
+
+    annotation_dict = deepcopy(blocks[0].function.__annotations__)
+
+    new_function.__annotations__.clear()
+    new_function.__annotations__.update(annotation_dict)
+
+    return block(new_function)
+
+def decomposition(*blocks: Block) -> Block:
+    """_summary_
+
+    Parameters
+    ----------
+    blocks : List[Block]
+        _description_
+
+    Returns
+    -------
+    Block
+        _description_
+    """
+    if not blocks:
+        raise ValueError("At least one block must be provided")
+
+    # TODO: Decomposition of blocks
+
+    annotation_dict = deepcopy(blocks[0].function.__annotations__)
+
+    new_function.__annotations__.clear()
+    new_function.__annotations__.update(annotation_dict)
+
+    return block(new_function)
+
+def selection(block: Block, *args: Any, **kwargs: Any) -> Block:
+    """_summary_
+
+    Parameters
+    ----------
+    block : Block
+        _description_
+
+    Returns
+    -------
+    Block
+        _description_
+    """
+    if not isinstance(block, Block):
+        raise TypeError("The argument must be a block")
+
+    return block(lambda *args, **kwargs: block.function(*args, **kwargs)[0])
+
+def summation(*blocks: Block) -> Block:
+    """_summary_
+
+    Parameters
+    ----------
+    blocks : List[Block]
+        _description_
+
+    Returns
+    -------
+    Block
+        _description_
+    """
+    if not blocks:
+        raise ValueError("At least one block must be provided")
+
+    return block()
